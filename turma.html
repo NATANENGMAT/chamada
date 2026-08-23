@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>Acompanhamento da turma</title>
+<meta name="theme-color" content="#17293F">
+<style>
+:root{--paper:#FBFAF6;--rule:#E1E6ED;--ink:#17293F;--soft:#66768B;--margin:#CF4B3E;
+--ok:#1F7A54;--okbg:#E4F2EA;--warn:#8F5F06;--warnbg:#FBEFD3;--no:#C0392B;--nobg:#FBE9E7;
+--blue:#2C5D93;--bluebg:#E4EDF6;
+--sys:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+--mono:ui-monospace,SFMono-Regular,Menlo,monospace}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--sys);font-size:16px;line-height:1.45;
+padding-bottom:calc(34px + env(safe-area-inset-bottom))}
+.wrap{max-width:700px;margin:0 auto;padding:0 14px}
+
+header{padding:calc(20px + env(safe-area-inset-top)) 0 10px;position:relative}
+header:before{content:"";position:absolute;left:-14px;top:0;bottom:0;width:3px;background:var(--margin)}
+.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.15em;text-transform:uppercase;
+color:var(--margin);margin:0 0 5px}
+h1{font-weight:800;font-size:29px;letter-spacing:-.02em;margin:0}
+.sub{font-size:13px;color:var(--soft);margin:7px 0 0}
+
+.busca{margin:16px 0 4px}
+.busca input{width:100%;font:inherit;font-size:16px;padding:13px 14px;border:1px solid var(--rule);
+border-radius:12px;background:#fff;color:var(--ink)}
+.busca input:focus{outline:none;border-color:var(--ink)}
+
+.card{background:#fff;border:1px solid var(--rule);border-radius:13px;padding:13px;margin-bottom:8px}
+.card .topo{display:flex;align-items:baseline;gap:9px;margin-bottom:2px}
+.card .num{font-family:var(--mono);font-size:11.5px;color:var(--soft)}
+.card .nome{font-weight:700;font-size:16px;flex:1;letter-spacing:-.01em}
+.resumo{display:flex;gap:6px;flex-wrap:wrap;margin:9px 0 0}
+.b{font-size:11.5px;font-weight:700;border-radius:99px;padding:4px 10px;background:#F1F4F8;color:var(--soft)}
+.b.ok{background:var(--okbg);color:var(--ok)}
+.b.w{background:var(--warnbg);color:var(--warn)}
+.b.r{background:var(--nobg);color:var(--no)}
+.b.j{background:var(--bluebg);color:var(--blue)}
+
+.abrir{font:inherit;font-size:12.5px;font-weight:600;color:var(--soft);background:none;
+border:none;padding:8px 0 0;cursor:pointer;text-decoration:underline}
+.dias{display:none;margin-top:10px;border-top:1px dashed var(--rule);padding-top:9px}
+.dias.on{display:block}
+.linha{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:13px;border-bottom:1px solid #F2F5F8}
+.linha:last-child{border-bottom:none}
+.linha .dt{font-family:var(--mono);font-size:12px;color:var(--soft);min-width:44px}
+.linha .mk{font-size:11px;font-weight:700;border-radius:6px;padding:3px 8px}
+.mk.p{background:var(--okbg);color:var(--ok)}
+.mk.f{background:var(--nobg);color:var(--no)}
+.mk.fj{background:var(--bluebg);color:var(--blue)}
+.mk.dia{background:var(--okbg);color:var(--ok)}
+.mk.atr{background:var(--warnbg);color:var(--warn)}
+.mk.nao{background:var(--nobg);color:var(--no)}
+
+.aviso{background:#fff;border:1px solid var(--rule);border-left:3px solid var(--margin);
+border-radius:10px;padding:13px;font-size:13px;color:var(--soft);margin:14px 0}
+.erro{background:var(--nobg);border:1px solid #E8A8A0;color:var(--no);border-radius:12px;
+padding:16px;font-size:14.5px;margin:18px 0}
+.carregando{text-align:center;color:var(--soft);font-size:14px;padding:40px 0}
+footer{margin-top:24px;font-size:11.5px;color:var(--soft);text-align:center;line-height:1.7}
+.hide{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Acompanhamento · Matemática</p>
+    <h1 id="tituloTurma">Carregando…</h1>
+    <p class="sub" id="sub"></p>
+  </header>
+
+  <div id="conteudo"><div class="carregando">Buscando os dados da turma…</div></div>
+
+  <footer>
+    Prof. Natanael · Matemática<br>
+    Página de consulta. Dúvidas sobre um registro, fale com o professor.
+  </footer>
+</div>
+
+<script>
+"use strict";
+
+/* Preenchido no momento de publicar. */
+var SUPABASE_URL = "https://hmnfhqemudatwtdctdvn.supabase.co";
+var SUPABASE_KEY = "sb_publishable_OqV9st0ZV1fdPA4Zppf1DQ_-aRvuIis";
+
+var DIAS = ["dom","seg","ter","qua","qui","sex","sáb"];
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s).replace(/[&<>"]/g, function(c){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+function ymd(iso){ var p = iso.split("-").map(Number); return new Date(p[0], p[1]-1, p[2]); }
+function curto(iso){ return iso.split("-").reverse().slice(0,2).join("/"); }
+function comDia(iso){ return curto(iso) + " " + DIAS[ymd(iso).getDay()]; }
+
+function token(){
+  var m = location.search.match(/[?&]t=([A-Za-z0-9_-]+)/);
+  return m ? m[1] : null;
+}
+
+function erro(msg){
+  $("tituloTurma").textContent = "Não encontrado";
+  $("sub").textContent = "";
+  $("conteudo").innerHTML = '<div class="erro">' + msg + '</div>';
+}
+
+var dados = null;
+
+function render(filtro){
+  filtro = (filtro || "").trim().toLowerCase();
+  var alunos = dados.alunos || [];
+  if(filtro) alunos = alunos.filter(function(a){
+    return a.nome.toLowerCase().indexOf(filtro) >= 0 || String(a.numero) === filtro; });
+
+  var h = '<div class="busca"><input type="search" id="q" placeholder="Buscar pelo nome" ' +
+          'value="' + esc(filtro) + '" autocapitalize="off" autocorrect="off"></div>';
+
+  h += '<div class="aviso">Toque em <b>ver aula por aula</b> para o detalhe de cada dia. ' +
+       'Entrega atrasada é aceita, com desconto por dia de atraso.</div>';
+
+  if(!alunos.length) h += '<div class="aviso">Nenhum aluno encontrado com esse nome.</div>';
+
+  alunos.forEach(function(a, i){
+    var dias = a.dias || {}, chaves = Object.keys(dias).sort();
+    var dia = 0, atr = 0, nao = 0;
+    chaves.forEach(function(k){
+      var e = dias[k].e;
+      if(e === "dia") dia++; if(e === "atr") atr++; if(e === "nao") nao++;
+    });
+
+    h += '<div class="card"><div class="topo">' +
+         '<span class="num">' + String(a.numero).padStart(2,"0") + '</span>' +
+         '<span class="nome">' + esc(a.nome) + '</span></div><div class="resumo">';
+    h += '<span class="b' + (a.faltas ? " r" : "") + '">' + a.faltas + ' falta' + (a.faltas === 1 ? "" : "s") + '</span>';
+    if(a.just) h += '<span class="b j">' + a.just + ' justificada' + (a.just === 1 ? "" : "s") + '</span>';
+    if(dia)    h += '<span class="b ok">' + dia + ' no dia</span>';
+    if(atr)    h += '<span class="b w">' + atr + ' atrasada' + (atr === 1 ? "" : "s") + '</span>';
+    if(nao)    h += '<span class="b r">' + nao + ' não entregue' + (nao === 1 ? "" : "s") + '</span>';
+    if(!chaves.length) h += '<span class="b">sem registro ainda</span>';
+    h += '</div>';
+
+    if(chaves.length){
+      h += '<button class="abrir" data-i="' + i + '">ver aula por aula</button>' +
+           '<div class="dias" id="d' + i + '">';
+      chaves.forEach(function(k){
+        var m = dias[k];
+        h += '<div class="linha"><span class="dt">' + comDia(k) + '</span>';
+        if(m.p === "P")  h += '<span class="mk p">presente</span>';
+        if(m.p === "F")  h += '<span class="mk f">falta</span>';
+        if(m.p === "FJ") h += '<span class="mk fj">falta justificada</span>';
+        if(m.e === "dia") h += '<span class="mk dia">entregou no dia</span>';
+        if(m.e === "atr") h += '<span class="mk atr">entregou atrasado</span>';
+        if(m.e === "nao") h += '<span class="mk nao">não entregou</span>';
+        h += '</div>';
+      });
+      h += '</div>';
+    }
+    h += '</div>';
+  });
+
+  $("conteudo").innerHTML = h;
+
+  var q = $("q");
+  q.oninput = function(){ var v = q.value, pos = q.selectionStart; render(v);
+    var novo = $("q"); novo.focus(); try{ novo.setSelectionRange(pos, pos); }catch(e){} };
+
+  var bs = document.querySelectorAll(".abrir");
+  for(var i = 0; i < bs.length; i++){
+    bs[i].onclick = function(ev){
+      var b = ev.currentTarget, alvo = $("d" + b.getAttribute("data-i"));
+      var aberto = alvo.classList.toggle("on");
+      b.textContent = aberto ? "ocultar" : "ver aula por aula";
+    };
+  }
+}
+
+(function(){
+  var t = token();
+  if(!t){ erro("Este endereço está incompleto. Peça o link completo ao professor."); return; }
+  if(SUPABASE_URL.indexOf("COLE_") === 0){
+    erro("A página ainda não foi configurada. Avise o professor."); return;
+  }
+  fetch(SUPABASE_URL + "/rest/v1/rpc/resumo_turma", {
+    method: "POST",
+    headers: {apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY,
+              "Content-Type": "application/json"},
+    body: JSON.stringify({p_token: t})
+  }).then(function(r){ return r.json(); }).then(function(b){
+    if(!b || !b.turma){
+      erro("Link inválido ou desativado. Confira se copiou o endereço inteiro, ou peça um novo ao professor.");
+      return;
+    }
+    dados = b;
+    $("tituloTurma").textContent = b.turma;
+    var n = (b.datas || []).length;
+    var txt = n ? n + " aula" + (n > 1 ? "s" : "") + " registrada" + (n > 1 ? "s" : "") : "Ainda sem aulas registradas";
+    if(n) txt += " · de " + curto(b.datas[0]) + " a " + curto(b.datas[n-1]);
+    $("sub").textContent = txt;
+    render("");
+  }).catch(function(){
+    erro("Não foi possível carregar agora. Verifique sua internet e tente de novo.");
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Chamada — Prof. Natanael</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#17293F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Chamada">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+:root{--paper:#FBFAF6;--rule:#E1E6ED;--ink:#17293F;--soft:#66768B;--margin:#CF4B3E;--mark:#F3C64B;
+--ok:#1F7A54;--okbg:#E4F2EA;--warn:#8F5F06;--warnbg:#FBEFD3;--no:#C0392B;--nobg:#FBE9E7;
+--blue:#2C5D93;--bluebg:#E4EDF6;
+--sys:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+--mono:ui-monospace,SFMono-Regular,Menlo,monospace}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;overscroll-behavior-y:none}
+body{background:var(--paper);color:var(--ink);font-family:var(--sys);font-size:16px;line-height:1.45;
+padding-bottom:calc(28px + env(safe-area-inset-bottom))}
+.wrap{max-width:700px;margin:0 auto;padding:0 13px}
+.hide{display:none!important}
+
+header{padding:calc(16px + env(safe-area-inset-top)) 0 8px;position:relative}
+header:before{content:"";position:absolute;left:-13px;top:0;bottom:0;width:3px;background:var(--margin)}
+.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--margin);margin:0 0 4px}
+h1{font-weight:800;font-size:27px;letter-spacing:-.02em;margin:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tag{font-size:10.5px;font-weight:700;border-radius:99px;padding:3px 9px}
+.tag.off{color:var(--warn);background:var(--warnbg)}
+.tag.fila{color:var(--blue);background:var(--bluebg)}
+
+.tabs{display:flex;gap:5px;margin:12px 0 0}
+.tab{flex:1;font:inherit;font-weight:600;font-size:14px;padding:10px 4px;border-radius:10px;
+border:1px solid var(--rule);background:#fff;color:var(--soft);cursor:pointer}
+.tab.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+.bar{display:flex;gap:5px;overflow-x:auto;padding:10px 0 3px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.bar::-webkit-scrollbar{display:none}
+.chip{font:inherit;font-weight:600;font-size:13px;white-space:nowrap;padding:9px 14px;border-radius:99px;
+border:1px solid var(--rule);background:#fff;color:var(--soft);cursor:pointer}
+.chip.on{background:var(--mark);border-color:#DCA92F;color:var(--ink)}
+
+.ctrl{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin:8px 0 2px}
+input[type=date],input[type=email],input[type=password],input[type=text]{font:inherit;font-size:16px;
+padding:11px;border:1px solid var(--rule);border-radius:10px;background:#fff;color:var(--ink);width:100%}
+input[type=date]{width:auto;font-weight:600;padding:9px 10px}
+.mini{font:inherit;font-weight:600;font-size:13px;padding:9px 12px;border-radius:9px;
+border:1px solid var(--ink);background:#fff;color:var(--ink);cursor:pointer}
+.mini.ghost{border-color:var(--rule);color:var(--soft)}
+.mini:active{transform:scale(.98)}
+.big{width:100%;font:inherit;font-weight:700;font-size:16px;padding:14px;border-radius:11px;
+border:1px solid var(--ink);background:var(--ink);color:#fff;cursor:pointer;margin-top:4px}
+
+.tally{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin:10px 0 5px}
+.t{background:#fff;border:1px solid var(--rule);border-radius:10px;padding:8px 2px;text-align:center}
+.t b{display:block;font-size:19px;font-weight:800;line-height:1.15}
+.t span{font-size:9.5px;color:var(--soft)}
+.t.g b{color:var(--ok)} .t.w b{color:var(--warn)} .t.r b{color:var(--no)} .t.b b{color:var(--blue)}
+
+.row{display:flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--rule);
+border-radius:11px;padding:7px 8px;margin-bottom:5px}
+.num{font-family:var(--mono);font-size:11px;color:var(--soft);min-width:19px}
+.nm{flex:1;font-size:14.5px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.pill{font:inherit;font-weight:700;font-size:12px;border-radius:8px;padding:11px 0;
+border:1px solid var(--rule);background:#F4F6F9;color:var(--soft);cursor:pointer;flex:none}
+.pill.p{width:46px} .pill.a{width:84px}
+.pill:active{transform:scale(.96)}
+.pill:focus-visible{outline:3px solid var(--mark);outline-offset:2px}
+.pill.yes{background:var(--okbg);border-color:#9CCDB4;color:var(--ok)}
+.pill.late{background:var(--warnbg);border-color:#DFBE70;color:var(--warn)}
+.pill.no{background:var(--nobg);border-color:#E8A8A0;color:var(--no)}
+.pill.just{background:var(--bluebg);border-color:#9DBAD6;color:var(--blue)}
+.row.absent .nm{color:#A7B2C0;text-decoration:line-through}
+
+.hd{display:flex;gap:7px;padding:0 8px 5px;font-size:9.5px;color:var(--soft);
+letter-spacing:.07em;text-transform:uppercase;font-weight:700}
+.hd .sp{flex:1}
+.hd i{text-align:center;font-style:normal;flex:none}
+.hd i.p{width:46px} .hd i.a{width:84px}
+
+.panel{background:#fff;border:1px solid var(--rule);border-radius:11px;padding:14px;margin:11px 0}
+.panel h3{font-size:13px;margin:0 0 11px;letter-spacing:.02em}
+.panel p.hint{font-size:12.5px;color:var(--soft);margin:0 0 12px}
+.field{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.field:last-child{margin-bottom:0}
+.field label{flex:1;font-size:13.5px;color:var(--soft)}
+.field input[type=number]{font:inherit;font-weight:700;font-size:16px;width:76px;padding:9px;
+border:1px solid var(--rule);border-radius:9px;text-align:center;background:var(--paper);color:var(--ink)}
+.stack{margin-bottom:11px}
+.stack label{display:block;font-size:12.5px;color:var(--soft);margin:0 0 5px}
+.sw{width:50px;height:29px;border-radius:99px;border:1px solid var(--rule);background:#E8ECF1;
+position:relative;cursor:pointer;flex:none;transition:background .18s}
+.sw:after{content:"";position:absolute;top:2px;left:2px;width:23px;height:23px;border-radius:50%;
+background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:transform .18s}
+.sw.on{background:var(--ok);border-color:var(--ok)}
+.sw.on:after{transform:translateX(21px)}
+.escala{font-family:var(--mono);font-size:11.5px;color:var(--soft);margin-top:10px;line-height:1.7}
+
+table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--rule);border-radius:11px;overflow:hidden}
+th,td{padding:7px 4px;text-align:left;font-size:12.5px;border-bottom:1px solid var(--rule)}
+th{background:#F4F6F9;font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);font-weight:700}
+td.n,th.n{text-align:center;font-family:var(--mono)}
+tr:last-child td{border-bottom:none}
+td.nota{font-weight:800;font-family:var(--sys)}
+td.nota.low{color:var(--no)}
+
+.note{font-size:12.5px;color:var(--soft);margin:12px 0 0;border-left:3px solid var(--margin);padding-left:11px}
+.empty{background:#fff;border:1px dashed var(--rule);border-radius:11px;padding:24px 15px;text-align:center;color:var(--soft);font-size:14px}
+.erro{background:var(--nobg);border:1px solid #E8A8A0;color:var(--no);border-radius:10px;
+padding:11px;font-size:13.5px;margin:10px 0}
+footer{margin-top:22px;font-size:11.5px;color:var(--soft);text-align:center}
+.linkrow{display:flex;justify-content:space-between;align-items:center;gap:8px;
+background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:10px 12px;margin-bottom:6px}
+.linkrow b{font-size:14px}
+
+.veu{position:fixed;inset:0;background:rgba(23,41,63,.42);display:none;z-index:40}
+.veu.on{display:block}
+.folha{position:fixed;left:0;right:0;bottom:0;z-index:41;background:var(--paper);
+border-radius:20px 20px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom));
+transform:translateY(101%);transition:transform .22s ease;max-width:700px;margin:0 auto;
+box-shadow:0 -6px 26px rgba(23,41,63,.18)}
+.folha.on{transform:translateY(0)}
+.folha h4{margin:0 0 3px;font-size:17px;font-weight:800}
+.folha .sub{font-size:12.5px;color:var(--soft);margin:0 0 13px}
+.opt{display:block;width:100%;text-align:left;font:inherit;font-weight:600;font-size:15px;
+padding:14px;border-radius:11px;border:1px solid var(--rule);background:#fff;color:var(--ink);
+margin-bottom:7px;cursor:pointer}
+.opt small{display:block;font-weight:400;font-size:12px;color:var(--soft);margin-top:2px}
+.opt.sel{border-color:var(--ink);border-width:2px;padding:13px}
+.entregue{display:none;background:#fff;border:1px solid var(--rule);border-radius:11px;padding:12px;margin:0 0 7px}
+.entregue.on{display:block}
+.entregue .lb{font-size:12px;color:var(--soft);margin-bottom:7px}
+.calc{font-size:13px;font-weight:700;margin-top:9px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap hide" id="telaCfg">
+  <header><p class="eyebrow">Primeira vez neste aparelho</p><h1>Configurar</h1></header>
+  <div class="panel">
+    <p class="hint">Cole os dois valores do seu projeto no Supabase. Ficam guardados aqui; você só faz isso uma vez por aparelho.</p>
+    <div class="stack"><label for="cUrl">Project URL</label>
+      <input type="text" id="cUrl" placeholder="https://xxxx.supabase.co" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
+    <div class="stack"><label for="cKey">Chave publicável</label>
+      <input type="text" id="cKey" placeholder="sb_publishable_..." autocapitalize="off" autocorrect="off" spellcheck="false"></div>
+    <div id="erroCfg"></div>
+    <button class="big" id="btnSalvarCfg">Salvar</button>
+  </div>
+</div>
+
+<div class="wrap hide" id="telaLogin">
+  <header><p class="eyebrow">Diário de classe · Matemática</p><h1>Entrar</h1></header>
+  <div class="panel">
+    <div class="stack"><label for="lEmail">E-mail</label>
+      <input type="email" id="lEmail" autocapitalize="off" autocorrect="off" spellcheck="false" autocomplete="username"></div>
+    <div class="stack"><label for="lSenha">Senha</label>
+      <input type="password" id="lSenha" autocomplete="current-password"></div>
+    <div id="erroLogin"></div>
+    <button class="big" id="btnEntrar">Entrar</button>
+    <button class="mini ghost" id="btnTrocarCfg" style="width:100%;margin-top:8px">Trocar as chaves do projeto</button>
+  </div>
+</div>
+
+<div class="wrap hide" id="telaApp">
+<header>
+  <p class="eyebrow">Diário de classe · Matemática</p>
+  <h1>Chamada <span class="tag hide" id="badge"></span></h1>
+</header>
+
+<div class="tabs">
+  <button class="tab on" id="tabDia">Aula do dia</button>
+  <button class="tab" id="tabRes">Notas</button>
+  <button class="tab" id="tabCfg">Ajustes</button>
+</div>
+
+<div class="bar" id="chips"></div>
+
+<section id="viewDia">
+  <div class="ctrl">
+    <input type="date" id="data">
+    <button class="mini" id="btnTodos">Todos presentes, entregou</button>
+    <button class="mini ghost" id="btnLimpar">Limpar dia</button>
+  </div>
+  <div class="tally">
+    <div class="t g"><b id="cP">0</b><span>Presentes</span></div>
+    <div class="t r"><b id="cF">0</b><span>Faltas</span></div>
+    <div class="t b"><b id="cJ">0</b><span>Justific.</span></div>
+    <div class="t w"><b id="cA">0</b><span>Atrasado</span></div>
+    <div class="t r"><b id="cN">0</b><span>Não entr.</span></div>
+  </div>
+  <div class="hd"><span style="min-width:19px"></span><span class="sp">Aluno</span><i class="p">Pres.</i><i class="a">Entrega</i></div>
+  <div id="lista"></div>
+  <div class="ctrl" style="margin-top:11px">
+    <button class="mini" id="btnCopiaDia">Copiar resumo do dia</button>
+  </div>
+</section>
+
+<section id="viewRes" class="hide">
+  <div class="panel">
+    <h3>Regra da nota</h3>
+    <div class="field"><label>Entrega no dia vale</label><input type="number" id="vDia" step="0.1" min="0" max="10" value="10"></div>
+    <div class="field"><label>Zera com quantos dias de atraso</label><input type="number" id="vZera" step="1" min="1" max="30" value="5"></div>
+    <div class="field"><label>Último dia do bimestre</label><input type="date" id="vFim" value="2026-09-24"></div>
+    <div class="field"><label>Falta justificada entrega sem desconto</label>
+      <button class="sw on" id="swJust" role="switch" aria-checked="true" aria-label="Falta justificada sem desconto"></button></div>
+    <div class="escala" id="escala"></div>
+    <button class="mini ghost" id="btnSalvarRegra" style="width:100%;margin-top:11px">Salvar regra para todos os aparelhos</button>
+  </div>
+  <div id="resumo"></div>
+  <div class="ctrl" style="margin-top:11px">
+    <button class="mini" id="btnCopiaRes">Copiar tabela</button>
+  </div>
+  <p class="note">A nota é a média das atividades lançadas para cada aluno. Entrega depois do último dia do bimestre vale zero.</p>
+</section>
+
+<section id="viewCfg" class="hide">
+  <div class="panel">
+    <h3>Links das páginas dos pais</h3>
+    <p class="hint">Um endereço por turma. Mostra nome, frequência e situação da entrega — sem nota e sem o nome da escola. Mande no grupo da turma certa.</p>
+    <div id="links"></div>
+  </div>
+  <div class="panel">
+    <h3>Sincronia</h3>
+    <div id="statusSync"></div>
+    <button class="mini" id="btnSincronizar" style="width:100%;margin-top:10px">Sincronizar agora</button>
+    <button class="mini ghost" id="btnRecarregar" style="width:100%;margin-top:7px">Recarregar turmas e alunos</button>
+  </div>
+  <div class="panel">
+    <h3>Conta</h3>
+    <p class="hint" id="quemSou"></p>
+    <button class="mini ghost" id="btnSair" style="width:100%">Sair</button>
+  </div>
+</section>
+
+<footer>Prof. Natanael · Matemática</footer>
+</div>
+
+<div class="veu" id="veu"></div>
+<div class="folha" id="folha">
+  <h4 id="fNome">Aluno</h4>
+  <p class="sub" id="fSub"></p>
+  <button class="opt" data-e="dia">Entregou no dia<small id="oDia"></small></button>
+  <button class="opt" data-e="atr">Entregou atrasado<small>Escolha a data da entrega</small></button>
+  <div class="entregue" id="boxData">
+    <div class="lb">Data em que entregou</div>
+    <input type="date" id="fData">
+    <div class="calc" id="fCalc"></div>
+  </div>
+  <button class="opt" data-e="nao">Não entregou<small>Nota 0,0</small></button>
+  <button class="opt" data-e="">Limpar registro</button>
+</div>
+
+<script>
+"use strict";
+
+var LS = {
+  get: function(k, d){ try{ var v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); }catch(e){ return d; } },
+  set: function(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); return true; }catch(e){ return false; } },
+  del: function(k){ try{ localStorage.removeItem(k); }catch(e){} }
+};
+
+var cfg    = LS.get("ch:cfg", null);
+var sess   = LS.get("ch:sess", null);
+var regra  = LS.get("ch:regra", {vDia:10, zera:5, fim:"2026-09-24", justSemDesconto:true});
+var turmas = LS.get("ch:turmas", []);
+var reg    = LS.get("ch:reg", {});
+var fila   = LS.get("ch:fila", []);
+var turmaAtual = LS.get("ch:turmaAtual", null);
+var alvo = null, escoando = false;
+
+function $(id){ return document.getElementById(id); }
+function salvaReg(){ LS.set("ch:reg", reg); }
+function salvaFila(){ LS.set("ch:fila", fila); }
+
+/* ---------- Supabase ---------- */
+function api(caminho, opc){
+  opc = opc || {};
+  var h = {apikey: cfg.key, "Content-Type": "application/json"};
+  if(opc.headers) for(var k in opc.headers) h[k] = opc.headers[k];
+  if(sess && sess.access_token) h.Authorization = "Bearer " + sess.access_token;
+  var o = {headers: h};
+  if(opc.method) o.method = opc.method;
+  if(opc.body) o.body = opc.body;
+  return fetch(cfg.url + caminho, o).then(function(r){
+    if(r.status === 401 && sess && sess.refresh_token && !opc.__retry){
+      return renovar().then(function(ok){
+        if(!ok) return r;
+        opc.__retry = true;
+        return api(caminho, opc);
+      });
+    }
+    return r;
+  });
+}
+
+function entrar(email, senha){
+  return fetch(cfg.url + "/auth/v1/token?grant_type=password", {
+    method: "POST",
+    headers: {apikey: cfg.key, "Content-Type": "application/json"},
+    body: JSON.stringify({email: email, password: senha})
+  }).then(function(r){
+    return r.json().then(function(b){
+      if(!r.ok) throw new Error(b.error_description || b.msg || b.message || "Não foi possível entrar");
+      sess = {access_token: b.access_token, refresh_token: b.refresh_token,
+              email: (b.user && b.user.email) || email};
+      LS.set("ch:sess", sess);
+    });
+  });
+}
+
+function renovar(){
+  return fetch(cfg.url + "/auth/v1/token?grant_type=refresh_token", {
+    method: "POST",
+    headers: {apikey: cfg.key, "Content-Type": "application/json"},
+    body: JSON.stringify({refresh_token: sess.refresh_token})
+  }).then(function(r){
+    if(!r.ok) return false;
+    return r.json().then(function(b){
+      sess.access_token = b.access_token;
+      if(b.refresh_token) sess.refresh_token = b.refresh_token;
+      LS.set("ch:sess", sess);
+      return true;
+    });
+  }).catch(function(){ return false; });
+}
+
+function baixarTurmas(){
+  return api("/rest/v1/turmas?select=id,nome,ordem,token,alunos(id,numero,nome,marcado,ativo)&order=ordem")
+  .then(function(r){
+    if(!r.ok) throw new Error("turmas " + r.status);
+    return r.json();
+  }).then(function(b){
+    turmas = b.map(function(t){
+      var al = (t.alunos || []).filter(function(a){ return a.ativo !== false; });
+      al.sort(function(x, y){ return x.numero - y.numero; });
+      return {id: t.id, nome: t.nome, ordem: t.ordem, token: t.token, alunos: al};
+    });
+    LS.set("ch:turmas", turmas);
+    var existe = turmas.some(function(t){ return t.id === turmaAtual; });
+    if(!existe){ turmaAtual = turmas.length ? turmas[0].id : null; LS.set("ch:turmaAtual", turmaAtual); }
+  });
+}
+
+function baixarRegistros(){
+  return api("/rest/v1/registros?select=aluno_id,data,presenca,entrega,data_entrega&limit=20000")
+  .then(function(r){
+    if(!r.ok) throw new Error("registros " + r.status);
+    return r.json();
+  }).then(function(linhas){
+    var deQuem = {};
+    turmas.forEach(function(t){ t.alunos.forEach(function(a){ deQuem[a.id] = t.id; }); });
+    var novo = {};
+    linhas.forEach(function(l){
+      var tid = deQuem[l.aluno_id]; if(!tid) return;
+      if(!novo[tid]) novo[tid] = {};
+      if(!novo[tid][l.data]) novo[tid][l.data] = {};
+      novo[tid][l.data][l.aluno_id] = {p: l.presenca || null, e: l.entrega || null, d: l.data_entrega || null};
+    });
+    fila.forEach(function(f){
+      var tid = deQuem[f.aluno_id]; if(!tid) return;
+      if(!novo[tid]) novo[tid] = {};
+      if(!novo[tid][f.data]) novo[tid][f.data] = {};
+      novo[tid][f.data][f.aluno_id] = {p: f.presenca, e: f.entrega, d: f.data_entrega};
+    });
+    reg = novo; salvaReg();
+  });
+}
+
+function baixarRegra(){
+  return api("/rest/v1/config?select=valor&chave=eq.regra").then(function(r){
+    if(!r.ok) return;
+    return r.json().then(function(b){
+      if(b.length && b[0].valor){
+        for(var k in b[0].valor) regra[k] = b[0].valor[k];
+        LS.set("ch:regra", regra);
+      }
+    });
+  }).catch(function(){});
+}
+
+function subirRegra(){
+  return api("/rest/v1/config?chave=eq.regra", {
+    method: "PATCH", headers: {Prefer: "return=minimal"},
+    body: JSON.stringify({valor: regra})
+  }).then(function(r){ return r.ok; }).catch(function(){ return false; });
+}
+
+/* ---------- fila ---------- */
+function enfileirar(alunoId, data, m){
+  fila = fila.filter(function(f){ return !(f.aluno_id === alunoId && f.data === data); });
+  fila.push({aluno_id: alunoId, data: data, presenca: m.p || null,
+             entrega: m.e || null, data_entrega: m.d || null});
+  salvaFila(); badge(); escoar();
+}
+
+function escoar(){
+  if(escoando || !fila.length || !navigator.onLine || !sess || !cfg) return Promise.resolve();
+  escoando = true;
+  var lote = fila.slice(0, 200);
+  return api("/rest/v1/registros?on_conflict=aluno_id,data", {
+    method: "POST",
+    headers: {Prefer: "resolution=merge-duplicates,return=minimal"},
+    body: JSON.stringify(lote)
+  }).then(function(r){
+    if(r.ok){
+      var chaves = {};
+      lote.forEach(function(x){ chaves[x.aluno_id + "|" + x.data] = 1; });
+      fila = fila.filter(function(f){ return !chaves[f.aluno_id + "|" + f.data]; });
+      salvaFila();
+    }
+  }).catch(function(){}).then(function(){
+    escoando = false; badge();
+    if(fila.length && navigator.onLine) setTimeout(escoar, 5000);
+  });
+}
+
+function badge(){
+  var b = $("badge");
+  if(!navigator.onLine){ b.className = "tag off"; b.textContent = "offline"; return; }
+  if(fila.length){ b.className = "tag fila"; b.textContent = fila.length + " a enviar"; return; }
+  b.className = "tag hide"; b.textContent = "";
+}
+
+/* ---------- utilidades ---------- */
+var DIAS = ["domingo","segunda-feira","terça-feira","quarta-feira","quinta-feira","sexta-feira","sábado"];
+function turma(){
+  for(var i = 0; i < turmas.length; i++) if(turmas[i].id === turmaAtual) return turmas[i];
+  return {alunos: [], nome: ""};
+}
+function hojeISO(){
+  var d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+}
+function ymd(iso){ var p = iso.split("-").map(Number); return new Date(p[0], p[1]-1, p[2]); }
+function diasEntre(a, b){ return Math.round((ymd(b) - ymd(a)) / 86400000); }
+function curto(iso){ return iso ? iso.split("-").reverse().slice(0,2).join("/") : ""; }
+function dataBR(iso){ return iso ? curto(iso) + "/" + iso.split("-")[0] + " — " + DIAS[ymd(iso).getDay()] : ""; }
+function esc(s){ return String(s).replace(/[&<>]/g, function(c){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c]; }); }
+function fmt(v){ return (v === null || v === undefined) ? "—" : Number(v).toFixed(1).replace(".", ","); }
+
+function diaAtual(){
+  var iso = $("data").value;
+  if(!reg[turmaAtual]) reg[turmaAtual] = {};
+  if(!reg[turmaAtual][iso]) reg[turmaAtual][iso] = {};
+  return reg[turmaAtual][iso];
+}
+
+function valor(m, dataAula){
+  if(!m || !m.e) return null;
+  if(m.e === "nao") return 0;
+  if(m.e === "dia") return regra.vDia;
+  var dEnt = m.d || dataAula;
+  if(regra.fim && diasEntre(regra.fim, dEnt) > 0) return 0;
+  if(regra.justSemDesconto && m.p === "FJ") return regra.vDia;
+  var atraso = Math.max(0, diasEntre(dataAula, dEnt));
+  if(atraso >= regra.zera) return 0;
+  return Math.max(0, regra.vDia * (1 - atraso / regra.zera));
+}
+
+/* ---------- lista do dia ---------- */
+var PROX_P = {"null":"P", "P":"F", "F":"FJ", "FJ":null};
+
+function rotEntrega(m, dataAula){
+  if(!m || !m.e) return "—";
+  if(m.e === "dia") return "No dia";
+  if(m.e === "nao") return "Não";
+  return "Atr. " + Math.max(0, diasEntre(dataAula, m.d || dataAula)) + "d";
+}
+function clsEntrega(m){
+  if(!m || !m.e) return "";
+  return m.e === "dia" ? " yes" : (m.e === "atr" ? " late" : " no");
+}
+
+function renderDia(){
+  var t = turma(), d = diaAtual(), iso = $("data").value, host = $("lista");
+  host.innerHTML = "";
+  var p=0, f=0, j=0, a=0, n=0;
+  t.alunos.forEach(function(al){
+    var m = d[al.id] || {};
+    if(m.p === "P") p++; if(m.p === "F") f++; if(m.p === "FJ") j++;
+    if(m.e === "atr") a++; if(m.e === "nao") n++;
+
+    var row = document.createElement("div");
+    row.className = "row" + (m.p === "F" ? " absent" : "");
+    row.innerHTML = '<span class="num">' + String(al.numero).padStart(2,"0") + '</span>' +
+      '<span class="nm"></span><button class="pill p"></button><button class="pill a"></button>';
+    row.querySelector(".nm").textContent = al.nome;
+    var pills = row.querySelectorAll(".pill"), bp = pills[0], ba = pills[1];
+
+    bp.textContent = m.p ? m.p : "—";
+    bp.className = "pill p" + (m.p === "P" ? " yes" : m.p === "F" ? " no" : m.p === "FJ" ? " just" : "");
+    bp.setAttribute("aria-label", "Presença de " + al.nome);
+    bp.onclick = function(){
+      if(!d[al.id]) d[al.id] = {};
+      d[al.id].p = PROX_P[String(d[al.id].p)];
+      gravar(al.id, iso, d[al.id]);
+    };
+
+    ba.textContent = rotEntrega(m, iso);
+    ba.className = "pill a" + clsEntrega(m);
+    ba.setAttribute("aria-label", "Entrega de " + al.nome);
+    ba.onclick = function(){ abrirFolha(al); };
+
+    host.appendChild(row);
+  });
+  $("cP").textContent = p; $("cF").textContent = f; $("cJ").textContent = j;
+  $("cA").textContent = a; $("cN").textContent = n;
+}
+
+function gravar(alunoId, iso, m){ salvaReg(); enfileirar(alunoId, iso, m); renderDia(); }
+
+/* ---------- folha ---------- */
+function abrirFolha(al){
+  var iso = $("data").value;
+  alvo = {al: al, iso: iso};
+  var m = diaAtual()[al.id] || {};
+  $("fNome").textContent = al.nome;
+  $("fSub").textContent = "Atividade de " + dataBR(iso);
+  $("oDia").textContent = "Nota " + fmt(regra.vDia);
+  $("fData").value = m.d || iso;
+  $("fData").min = iso;
+  $("boxData").classList.toggle("on", m.e === "atr");
+  var opts = document.querySelectorAll("#folha .opt");
+  for(var i = 0; i < opts.length; i++)
+    opts[i].classList.toggle("sel", (opts[i].getAttribute("data-e") || "") === (m.e || ""));
+  calc();
+  $("veu").classList.add("on"); $("folha").classList.add("on");
+}
+function fecharFolha(){ $("veu").classList.remove("on"); $("folha").classList.remove("on"); alvo = null; }
+
+function calc(){
+  if(!alvo) return;
+  var atual = diaAtual()[alvo.al.id] || {}, dEnt = $("fData").value;
+  var at = Math.max(0, diasEntre(alvo.iso, dEnt)), txt;
+  if(regra.fim && diasEntre(regra.fim, dEnt) > 0) txt = "Depois de " + curto(regra.fim) + " → nota 0,0";
+  else if(regra.justSemDesconto && atual.p === "FJ")
+    txt = "Falta justificada → nota " + fmt(regra.vDia) + ", sem desconto";
+  else txt = at + (at === 1 ? " dia" : " dias") + " de atraso → nota " +
+             fmt(valor({e:"atr", d:dEnt, p:atual.p}, alvo.iso));
+  $("fCalc").textContent = txt;
+}
+
+/* ---------- resumo ---------- */
+function totais(alunoId){
+  var porData = reg[turmaAtual] || {};
+  var f=0, j=0, d=0, a=0, n=0, soma=0, q=0;
+  Object.keys(porData).forEach(function(iso){
+    var m = porData[iso][alunoId]; if(!m) return;
+    if(m.p === "F") f++; if(m.p === "FJ") j++;
+    if(m.e === "dia") d++; if(m.e === "atr") a++; if(m.e === "nao") n++;
+    var v = valor(m, iso);
+    if(v !== null){ soma += v; q++; }
+  });
+  return {f:f, j:j, d:d, a:a, n:n, media: q ? soma / q : null};
+}
+
+function renderResumo(){
+  var t = turma(), host = $("resumo"), porData = reg[turmaAtual] || {};
+  var datas = Object.keys(porData).filter(function(iso){
+    return Object.keys(porData[iso]).some(function(k){
+      return porData[iso][k].p || porData[iso][k].e; });
+  }).sort();
+  if(!datas.length){
+    host.innerHTML = '<div class="empty">Nenhuma aula registrada nesta turma ainda.</div>';
+    return;
+  }
+  var h = '<table><thead><tr><th>Aluno</th><th class="n">F</th><th class="n">FJ</th><th class="n">Dia</th>' +
+          '<th class="n">Atr</th><th class="n">Não</th><th class="n">Nota</th></tr></thead><tbody>';
+  t.alunos.forEach(function(al){
+    var s = totais(al.id);
+    h += '<tr><td>' + esc(al.nome) + '</td><td class="n">' + s.f + '</td><td class="n">' + s.j +
+         '</td><td class="n">' + s.d + '</td><td class="n">' + s.a + '</td><td class="n">' + s.n +
+         '</td><td class="n nota' + (s.media !== null && s.media < 6 ? " low" : "") + '">' +
+         fmt(s.media) + '</td></tr>';
+  });
+  h += '</tbody></table><p class="note">' + datas.length + ' aula' + (datas.length > 1 ? "s" : "") +
+       ' de ' + curto(datas[0]) + ' a ' + curto(datas[datas.length-1]) + '.</p>';
+  host.innerHTML = h;
+}
+
+function renderEscala(){
+  var l = [];
+  for(var i = 0; i <= regra.zera; i++)
+    l.push((i === 0 ? "no dia" : i + "d") + " = " + fmt(i >= regra.zera ? 0 : regra.vDia * (1 - i / regra.zera)));
+  $("escala").textContent = l.join("  ·  ");
+}
+
+function renderAjustes(){
+  var base = location.href.split("?")[0].replace(/[^\/]*$/, "") + "turma.html?t=";
+  $("links").innerHTML = turmas.map(function(t){
+    return '<div class="linkrow"><b>' + esc(t.nome) + '</b>' +
+           '<button class="mini" data-link="' + esc(base + t.token) + '">Copiar link</button></div>';
+  }).join("");
+  var bs = document.querySelectorAll("#links [data-link]");
+  for(var i = 0; i < bs.length; i++)
+    bs[i].onclick = function(e){ copiar(e.currentTarget.getAttribute("data-link"), e.currentTarget); };
+  $("statusSync").innerHTML = '<p class="hint" style="margin:0">' +
+    (navigator.onLine ? "Conectado. " : "Sem internet agora. ") +
+    (fila.length ? fila.length + " marcação(ões) esperando para subir." : "Tudo enviado.") + '</p>';
+  $("quemSou").textContent = sess ? sess.email : "";
+}
+
+/* ---------- cópia ---------- */
+function copiar(txt, btn){
+  var rot = btn.textContent;
+  function fim(ok){
+    btn.textContent = ok ? "Copiado" : "Não deu";
+    setTimeout(function(){ btn.textContent = rot; }, 1800);
+  }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(function(){ fim(true); }).catch(function(){ fim(manual(txt)); });
+  } else fim(manual(txt));
+}
+function manual(txt){
+  var ta = document.createElement("textarea");
+  ta.value = txt; ta.style.position = "fixed"; ta.style.top = "-1000px";
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  var ok = false;
+  try{ ok = document.execCommand("copy"); }catch(e){}
+  document.body.removeChild(ta);
+  return ok;
+}
+
+function textoDia(){
+  var t = turma(), d = diaAtual(), iso = $("data").value;
+  var faltas = [], just = [], atras = [], nao = [];
+  t.alunos.forEach(function(al){
+    var m = d[al.id] || {}, id = String(al.numero).padStart(2,"0") + " " + al.nome;
+    if(m.p === "F") faltas.push(id);
+    if(m.p === "FJ") just.push(id);
+    if(m.e === "atr") atras.push(id + " — entregou " + curto(m.d || iso) + ", nota " + fmt(valor(m, iso)));
+    if(m.e === "nao") nao.push(id);
+  });
+  function bl(tit, arr){ return tit + " (" + arr.length + ")\n" + (arr.length ? arr.join("\n") : "nenhum"); }
+  return [t.nome + " — " + dataBR(iso), "", bl("Faltas", faltas), "", bl("Faltas justificadas", just),
+          "", bl("Entregou atrasado", atras), "", bl("Não entregou", nao)].join("\n");
+}
+
+function textoResumo(){
+  var t = turma();
+  var l = [t.nome + " — no dia=" + fmt(regra.vDia) + ", zera com " + regra.zera + " dias, até " + curto(regra.fim),
+           "Aluno\tFaltas\tFaltasJust\tNoDia\tAtrasado\tNaoEntregou\tNota"];
+  t.alunos.forEach(function(al){
+    var s = totais(al.id);
+    l.push([al.nome, s.f, s.j, s.d, s.a, s.n, s.media === null ? "" : fmt(s.media)].join("\t"));
+  });
+  return l.join("\n");
+}
+
+/* ---------- telas ---------- */
+function mostrar(qual){
+  ["telaCfg","telaLogin","telaApp"].forEach(function(id){
+    $(id).classList.toggle("hide", id !== qual); });
+}
+
+function montarChips(){
+  var c = $("chips"); c.innerHTML = "";
+  turmas.forEach(function(t){
+    var b = document.createElement("button");
+    b.className = "chip" + (t.id === turmaAtual ? " on" : "");
+    b.textContent = t.nome;
+    b.onclick = function(){
+      turmaAtual = t.id; LS.set("ch:turmaAtual", turmaAtual);
+      for(var i = 0; i < c.children.length; i++) c.children[i].classList.remove("on");
+      b.classList.add("on");
+      renderDia(); renderResumo();
+    };
+    c.appendChild(b);
+  });
+}
+
+function iniciarApp(){
+  mostrar("telaApp");
+  if(!$("data").value) $("data").value = hojeISO();
+  var p = Promise.resolve();
+  if(navigator.onLine)
+    p = baixarTurmas().then(baixarRegra).then(baixarRegistros).catch(function(){});
+  return p.then(function(){
+    $("vDia").value = regra.vDia; $("vZera").value = regra.zera; $("vFim").value = regra.fim;
+    $("swJust").classList.toggle("on", !!regra.justSemDesconto);
+    montarChips(); renderEscala(); renderDia(); renderResumo(); renderAjustes(); badge(); escoar();
+  });
+}
+
+/* ---------- eventos ---------- */
+$("btnSalvarCfg").onclick = function(){
+  var u = $("cUrl").value.trim().replace(/\/+$/, ""), k = $("cKey").value.trim();
+  if(!/^https:\/\/[^\/]+\.supabase\.co$/.test(u)){
+    $("erroCfg").innerHTML = '<div class="erro">A URL deve ser parecida com https://xxxx.supabase.co</div>'; return;
+  }
+  if(k.length < 20){ $("erroCfg").innerHTML = '<div class="erro">A chave parece incompleta.</div>'; return; }
+  cfg = {url: u, key: k}; LS.set("ch:cfg", cfg);
+  $("erroCfg").innerHTML = "";
+  mostrar("telaLogin");
+};
+
+$("btnTrocarCfg").onclick = function(){
+  if(cfg){ $("cUrl").value = cfg.url; $("cKey").value = cfg.key; }
+  mostrar("telaCfg");
+};
+
+$("btnEntrar").onclick = function(e){
+  var b = e.currentTarget;
+  b.disabled = true; b.textContent = "Entrando...";
+  $("erroLogin").innerHTML = "";
+  entrar($("lEmail").value.trim(), $("lSenha").value).then(function(){
+    $("lSenha").value = "";
+    return iniciarApp();
+  }).catch(function(err){
+    $("erroLogin").innerHTML = '<div class="erro">' + esc(err.message) + '</div>';
+  }).then(function(){
+    b.disabled = false; b.textContent = "Entrar";
+  });
+};
+$("lSenha").addEventListener("keydown", function(e){ if(e.key === "Enter") $("btnEntrar").click(); });
+
+$("btnSair").onclick = function(){
+  if(fila.length && !confirm(fila.length + " marcação(ões) ainda não subiram. Sair mesmo assim?")) return;
+  sess = null; LS.del("ch:sess"); mostrar("telaLogin");
+};
+
+$("data").onchange = renderDia;
+
+$("btnTodos").onclick = function(){
+  var d = diaAtual(), iso = $("data").value;
+  turma().alunos.forEach(function(al){
+    d[al.id] = {p:"P", e:"dia", d:null};
+    enfileirar(al.id, iso, d[al.id]);
+  });
+  salvaReg(); renderDia();
+};
+
+$("btnLimpar").onclick = function(){
+  var iso = $("data").value;
+  if(!confirm("Apagar os registros de " + turma().nome + " em " + dataBR(iso) + "?")) return;
+  var d = diaAtual();
+  turma().alunos.forEach(function(al){
+    d[al.id] = {p:null, e:null, d:null};
+    enfileirar(al.id, iso, d[al.id]);
+  });
+  salvaReg(); renderDia();
+};
+
+$("btnCopiaDia").onclick = function(e){ copiar(textoDia(), e.currentTarget); };
+$("btnCopiaRes").onclick = function(e){ copiar(textoResumo(), e.currentTarget); };
+
+$("vDia").oninput = function(e){
+  var v = parseFloat(e.target.value); regra.vDia = isNaN(v) ? 0 : v;
+  LS.set("ch:regra", regra); renderEscala(); renderResumo();
+};
+$("vZera").oninput = function(e){
+  var v = parseInt(e.target.value, 10); regra.zera = (isNaN(v) || v < 1) ? 1 : v;
+  LS.set("ch:regra", regra); renderEscala(); renderResumo();
+};
+$("vFim").onchange = function(e){ regra.fim = e.target.value; LS.set("ch:regra", regra); renderResumo(); };
+$("swJust").onclick = function(e){
+  regra.justSemDesconto = !regra.justSemDesconto;
+  e.currentTarget.classList.toggle("on", regra.justSemDesconto);
+  e.currentTarget.setAttribute("aria-checked", regra.justSemDesconto);
+  LS.set("ch:regra", regra); renderResumo();
+};
+$("btnSalvarRegra").onclick = function(e){
+  var b = e.currentTarget, rot = b.textContent;
+  b.textContent = "Salvando...";
+  subirRegra().then(function(ok){
+    b.textContent = ok ? "Salvo" : "Falhou, tente com internet";
+    setTimeout(function(){ b.textContent = rot; }, 2000);
+  });
+};
+
+$("btnSincronizar").onclick = function(e){
+  var b = e.currentTarget, rot = b.textContent;
+  b.textContent = "Sincronizando...";
+  escoar().then(function(){ return baixarRegistros().catch(function(){}); }).then(function(){
+    renderDia(); renderResumo(); renderAjustes();
+    b.textContent = fila.length ? fila.length + " ainda pendente(s)" : "Tudo sincronizado";
+    setTimeout(function(){ b.textContent = rot; }, 2200);
+  });
+};
+
+$("btnRecarregar").onclick = function(e){
+  var b = e.currentTarget, rot = b.textContent;
+  b.textContent = "Recarregando...";
+  baixarTurmas().then(baixarRegistros).then(function(){
+    montarChips(); renderDia(); renderResumo(); renderAjustes();
+    b.textContent = "Pronto";
+  }).catch(function(){ b.textContent = "Falhou"; }).then(function(){
+    setTimeout(function(){ b.textContent = rot; }, 2000);
+  });
+};
+
+$("veu").onclick = fecharFolha;
+$("fData").oninput = calc;
+
+(function(){
+  var opts = document.querySelectorAll("#folha .opt");
+  for(var i = 0; i < opts.length; i++){
+    opts[i].onclick = function(ev){
+      if(!alvo) return;
+      var o = ev.currentTarget, e = o.getAttribute("data-e") || "";
+      var d = diaAtual();
+      if(!d[alvo.al.id]) d[alvo.al.id] = {};
+      var c = d[alvo.al.id];
+      if(e === ""){ c.e = null; c.d = null; gravar(alvo.al.id, alvo.iso, c); fecharFolha(); return; }
+      if(e === "atr"){
+        c.e = "atr"; c.d = $("fData").value;
+        $("boxData").classList.add("on");
+        var all = document.querySelectorAll("#folha .opt");
+        for(var k = 0; k < all.length; k++) all[k].classList.toggle("sel", all[k] === o);
+        calc(); gravar(alvo.al.id, alvo.iso, c);
+        return;
+      }
+      c.e = e; c.d = null;
+      gravar(alvo.al.id, alvo.iso, c); fecharFolha();
+    };
+  }
+})();
+
+var tD = $("tabDia"), tR = $("tabRes"), tC = $("tabCfg");
+function aba(qual){
+  var pares = [[tD,"viewDia"],[tR,"viewRes"],[tC,"viewCfg"]];
+  pares.forEach(function(par){
+    par[0].classList.toggle("on", par[0] === qual);
+    $(par[1]).classList.toggle("hide", par[0] !== qual);
+  });
+  $("chips").classList.toggle("hide", qual === tC);
+  if(qual === tR) renderResumo();
+  if(qual === tC) renderAjustes();
+}
+tD.onclick = function(){ aba(tD); };
+tR.onclick = function(){ aba(tR); };
+tC.onclick = function(){ aba(tC); };
+
+addEventListener("online", function(){ badge(); escoar(); });
+addEventListener("offline", badge);
+
+/* ---------- partida ---------- */
+$("data").value = hojeISO();
+if(!cfg) mostrar("telaCfg");
+else if(!sess) mostrar("telaLogin");
+else iniciarApp();
+
+if("serviceWorker" in navigator)
+  addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); });
+</script>
+</body>
+</html>
