@@ -1,0 +1,40 @@
+name: Manter Supabase ativo
+
+on:
+  schedule:
+    # A cada 3 dias, às 12:00 UTC (08:00 em Manaus)
+    - cron: "0 12 */3 * *"
+  # Permite rodar manualmente pelo botão "Run workflow"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Acordar o banco
+        run: |
+          URL="https://hmnfhqemudatwtdctdvn.supabase.co"
+          KEY="sb_publishable_OqV9st0ZV1fdPA4Zppf1DQ_-aRvuIis"
+
+          for i in 1 2 3 4 5; do
+            CODE=$(curl -s -o /tmp/resposta.txt -w "%{http_code}" --max-time 30 \
+              -X POST "$URL/rest/v1/rpc/resumo_turma" \
+              -H "apikey: $KEY" \
+              -H "Authorization: Bearer $KEY" \
+              -H "Content-Type: application/json" \
+              -d '{"p_token":"keepalive"}')
+
+            echo "Tentativa $i — HTTP $CODE"
+            head -c 300 /tmp/resposta.txt; echo
+
+            if [ "$CODE" -ge 200 ] && [ "$CODE" -lt 500 ]; then
+              echo "Banco respondeu. Projeto continua ativo."
+              exit 0
+            fi
+
+            echo "Sem resposta. Aguardando para tentar de novo..."
+            sleep $((i * 20))
+          done
+
+          echo "::error::O Supabase nao respondeu apos 5 tentativas. Verifique o painel."
+          exit 1
