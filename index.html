@@ -508,7 +508,7 @@ function renderDia(){
     bp.onclick = function(){
       if(!podeEditar()) return;
       if(!d[al.id]) d[al.id] = {};
-      d[al.id].p = PROX_P[String(d[al.id].p)];
+      d[al.id].p = PROX_P[String(d[al.id].p || null)];
       gravar(al.id, iso, d[al.id]);
     };
 
