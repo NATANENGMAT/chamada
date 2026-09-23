@@ -24,42 +24,29 @@ Em 1 ou 2 minutos o endereço fica de pé:
 
 ## 4. Instalar no iPhone
 Abra o endereço no **Safari** → botão Compartilhar → **Adicionar à Tela de Início**.
-Abra sempre pelo ícone: é assim que roda em tela cheia e offline.
+Abra sempre pelo ícone: é assim que roda em tela cheia. É necessário estar online.
 
-Na primeira abertura o app pede a URL e a chave. Já estão neste arquivo,
-na seção abaixo. Depois pede seu e-mail e senha do Supabase.
+Na primeira abertura o app pede a URL e a chave. Use a configuração do projeto. Depois pede seu e-mail e senha do Supabase.
 
 No iPad e no Windows é o mesmo endereço. No Chrome ou Edge aparece um ícone
 de instalar na barra de endereço.
 
-## Suas chaves
-- **Project URL:** https://hmnfhqemudatwtdctdvn.supabase.co
-- **Chave publicável:** sb_publishable_OqV9st0ZV1fdPA4Zppf1DQ_-aRvuIis
-- **Login:** natan032526@gmail.com
+## Configuração e acesso
+
+Use suas credenciais pessoais para entrar. Não publique senhas, e-mails de login ou chaves privadas neste repositório.
 
 ## Links das páginas dos pais
 Só funcionam depois de publicar. Estão também dentro do app, em **Ajustes**,
 com botão de copiar.
 
-| Turma | Link |
-|---|---|
-| 9º01 | https://natanengmat.github.io/chamada/turma.html?t=63f2319c47b98d7f |
-| 9º02 | https://natanengmat.github.io/chamada/turma.html?t=f3abf3a0da4b7e86 |
-| 9º04 | https://natanengmat.github.io/chamada/turma.html?t=2c454d6a55edf511 |
-| 2ª Série 04 | https://natanengmat.github.io/chamada/turma.html?t=601f08efdfe62205 |
-| 3ª Série 01 | https://natanengmat.github.io/chamada/turma.html?t=016e6800ba673ba6 |
-| 3ª Série 02 | https://natanengmat.github.io/chamada/turma.html?t=d41d7945eb7cb137 |
-
-Mande o link de cada turma só no grupo daquela turma.
+Copie os links diretamente na aba Ajustes do app. Compartilhe cada link apenas com os responsáveis da turma.
 
 ## Como usar no dia a dia
 1. Escolha a turma na fila de cima e confira a data.
-2. Toque em **Todos presentes, entregou**.
-3. Toque só nas exceções:
-   - **Presença**: cada toque alterna — → P → F → FJ → —
-   - **Entrega**: abre uma folha com no dia / atrasado (com a data) / não entregou
-4. Sem internet, pode marcar normalmente. Aparece **offline** no topo e as
-   marcações sobem sozinhas quando a rede voltar.
+2. Marque individualmente a presença e a entrega de cada aluno.
+3. Toque em **Enviar** para salvar todas as marcações pendentes, inclusive de outras turmas ou datas editadas nesta sessão.
+4. Aguarde a mensagem **Enviado e confirmado pelo banco**. Em caso de falha, tente novamente.
+5. Sem internet, edição e envio ficam bloqueados. Não há envio automático. As marcações não enviadas ficam apenas na página aberta; envie antes de fechar.
 
 A aba **Notas** mostra o acumulado por aluno e a regra do desconto.
 Mudou a regra? Toque em **Salvar regra para todos os aparelhos** — senão

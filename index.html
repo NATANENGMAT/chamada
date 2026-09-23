@@ -180,9 +180,9 @@ margin-bottom:7px;cursor:pointer}
 <section id="viewDia">
   <div class="ctrl">
     <input type="date" id="data">
-    <button class="mini" id="btnTodos">Todos presentes, entregou</button>
-    <button class="mini ghost" id="btnLimpar">Limpar dia</button>
+    <button class="mini" id="btnEnviar" disabled>Enviar</button>
   </div>
+  <p id="statusEnvio" class="note" role="status" aria-live="polite">Carregando dados do banco...</p>
   <div class="tally">
     <div class="t g"><b id="cP">0</b><span>Presentes</span></div>
     <div class="t r"><b id="cF">0</b><span>Faltas</span></div>
@@ -224,7 +224,7 @@ margin-bottom:7px;cursor:pointer}
   <div class="panel">
     <h3>Sincronia</h3>
     <div id="statusSync"></div>
-    <button class="mini" id="btnSincronizar" style="width:100%;margin-top:10px">Sincronizar agora</button>
+    <button class="mini" id="btnSincronizar" style="width:100%;margin-top:10px">Atualizar dados do banco</button>
     <button class="mini ghost" id="btnRecarregar" style="width:100%;margin-top:7px">Recarregar turmas e alunos</button>
   </div>
   <div class="panel">
@@ -264,18 +264,20 @@ var LS = {
 var cfg    = LS.get("ch:cfg", null);
 var sess   = LS.get("ch:sess", null);
 var regra  = LS.get("ch:regra", {vDia:10, zera:5, fim:"2026-09-24", justSemDesconto:true});
-var turmas = LS.get("ch:turmas", []);
-var reg    = LS.get("ch:reg", {});
-var fila   = LS.get("ch:fila", []);
+var turmas = [];
+var reg    = {};
+var fila = []; // Rascunhos apenas nesta sessão; nunca enviados automaticamente.
+var pronto = false;
 var turmaAtual = LS.get("ch:turmaAtual", null);
 var alvo = null, escoando = false;
 
 function $(id){ return document.getElementById(id); }
-function salvaReg(){ LS.set("ch:reg", reg); }
-function salvaFila(){ LS.set("ch:fila", fila); }
+function salvaReg(){}
+function salvaFila(){}
 
 /* ---------- Supabase ---------- */
 function api(caminho, opc){
+  if(!navigator.onLine) return Promise.reject(new Error("Sem internet. Conecte-se para continuar."));
   opc = opc || {};
   var h = {apikey: cfg.key, "Content-Type": "application/json"};
   if(opc.headers) for(var k in opc.headers) h[k] = opc.headers[k];
@@ -392,33 +394,43 @@ function enfileirar(alunoId, data, m){
   fila = fila.filter(function(f){ return !(f.aluno_id === alunoId && f.data === data); });
   fila.push({aluno_id: alunoId, data: data, presenca: m.p || null,
              entrega: m.e || null, data_entrega: m.d || null});
-  salvaFila(); badge(); escoar();
+  aviso("Alterações ainda não enviadas. Toque em Enviar para salvar todas as marcações pendentes."); badge();
 }
 
+function aviso(texto){ $("statusEnvio").textContent = texto; }
+function podeEditar(){ return pronto && navigator.onLine && !escoando; }
 function escoar(){
-  if(escoando || !fila.length || !navigator.onLine || !sess || !cfg) return Promise.resolve();
-  escoando = true;
-  var lote = fila.slice(0, 200);
+  if(!podeEditar() || !fila.length || !sess || !cfg) return Promise.resolve(false);
+  escoando = true; badge();
+  var lote = fila.slice();
+  aviso("Enviando " + lote.length + " marcação(ões)... Aguarde a confirmação.");
   return api("/rest/v1/registros?on_conflict=aluno_id,data", {
-    method: "POST",
-    headers: {Prefer: "resolution=merge-duplicates,return=minimal"},
+    method: "POST", headers: {Prefer: "resolution=merge-duplicates,return=representation"},
     body: JSON.stringify(lote)
   }).then(function(r){
-    if(r.ok){
-      var chaves = {};
-      lote.forEach(function(x){ chaves[x.aluno_id + "|" + x.data] = 1; });
-      fila = fila.filter(function(f){ return !chaves[f.aluno_id + "|" + f.data]; });
-      salvaFila();
-    }
-  }).catch(function(){}).then(function(){
-    escoando = false; badge();
-    if(fila.length && navigator.onLine) setTimeout(escoar, 5000);
-  });
+    if(!r.ok) throw new Error("O banco recusou o envio (" + r.status + ").");
+    return r.json();
+  }).then(function(salvos){
+    if(!Array.isArray(salvos) || !lote.every(function(x){
+      return salvos.some(function(y){ return y.aluno_id === x.aluno_id && y.data === x.data &&
+        (y.presenca || null) === x.presenca && (y.entrega || null) === x.entrega &&
+        (y.data_entrega || null) === x.data_entrega; });
+    })) throw new Error("Não foi possível confirmar todas as marcações no banco.");
+    fila = [];
+    aviso("✓ Enviado e confirmado pelo banco: " + lote.length + " marcação(ões), às " + new Date().toLocaleTimeString("pt-BR") + ".");
+    return true;
+  }).catch(function(err){
+    aviso("Envio não confirmado. " + err.message + " Suas marcações continuam nesta tela. Tente Enviar novamente.");
+    return false;
+  }).then(function(ok){ escoando = false; badge(); return ok; });
 }
-
 function badge(){
   var b = $("badge");
-  if(!navigator.onLine){ b.className = "tag off"; b.textContent = "offline"; return; }
+  $("btnEnviar").disabled = !podeEditar() || !fila.length;
+  $("btnEnviar").textContent = escoando ? "Enviando..." : "Enviar";
+  document.querySelectorAll("#lista button, #folha button, #folha input, #viewRes input, #viewRes button").forEach(function(el){ el.disabled = !podeEditar(); });
+  if(!navigator.onLine){ b.className = "tag off"; b.textContent = "Sem internet — edição bloqueada"; return; }
+  if(!pronto){ b.className = "tag off"; b.textContent = "Dados indisponíveis"; return; }
   if(fila.length){ b.className = "tag fila"; b.textContent = fila.length + " a enviar"; return; }
   b.className = "tag hide"; b.textContent = "";
 }
@@ -494,6 +506,7 @@ function renderDia(){
     bp.className = "pill p" + (m.p === "P" ? " yes" : m.p === "F" ? " no" : m.p === "FJ" ? " just" : "");
     bp.setAttribute("aria-label", "Presença de " + al.nome);
     bp.onclick = function(){
+      if(!podeEditar()) return;
       if(!d[al.id]) d[al.id] = {};
       d[al.id].p = PROX_P[String(d[al.id].p)];
       gravar(al.id, iso, d[al.id]);
@@ -507,13 +520,14 @@ function renderDia(){
     host.appendChild(row);
   });
   $("cP").textContent = p; $("cF").textContent = f; $("cJ").textContent = j;
-  $("cA").textContent = a; $("cN").textContent = n;
+  $("cA").textContent = a; $("cN").textContent = n; badge();
 }
 
 function gravar(alunoId, iso, m){ salvaReg(); enfileirar(alunoId, iso, m); renderDia(); }
 
 /* ---------- folha ---------- */
 function abrirFolha(al){
+  if(!podeEditar()) return;
   var iso = $("data").value;
   alvo = {al: al, iso: iso};
   var m = diaAtual()[al.id] || {};
@@ -673,16 +687,16 @@ function montarChips(){
 }
 
 function iniciarApp(){
-  mostrar("telaApp");
+  mostrar("telaApp"); pronto = false; badge();
   if(!$("data").value) $("data").value = hojeISO();
-  var p = Promise.resolve();
-  if(navigator.onLine)
-    p = baixarTurmas().then(baixarRegra).then(baixarRegistros).catch(function(){});
-  return p.then(function(){
+  return baixarTurmas().then(baixarRegra).then(baixarRegistros).then(function(){
+    pronto = true;
     $("vDia").value = regra.vDia; $("vZera").value = regra.zera; $("vFim").value = regra.fim;
     $("swJust").classList.toggle("on", !!regra.justSemDesconto);
-    montarChips(); renderEscala(); renderDia(); renderResumo(); renderAjustes(); badge(); escoar();
-  });
+    montarChips(); renderEscala(); renderDia(); renderResumo(); renderAjustes();
+    aviso(fila.length ? "Há marcações não enviadas. Toque em Enviar para salvar." : "Online. Faça as marcações e toque em Enviar para salvar.");
+    if(LS.get("ch:fila", []).length) aviso("Há pendências da versão antiga guardadas neste aparelho. Elas não foram enviadas. Confira os registros antes de lançar novamente.");
+  }).catch(function(){ aviso("Não foi possível carregar os dados do banco. Verifique a internet e toque em Recarregar turmas e alunos, em Ajustes."); }).then(badge);
 }
 
 /* ---------- eventos ---------- */
@@ -719,30 +733,13 @@ $("lSenha").addEventListener("keydown", function(e){ if(e.key === "Enter") $("bt
 
 $("btnSair").onclick = function(){
   if(fila.length && !confirm(fila.length + " marcação(ões) ainda não subiram. Sair mesmo assim?")) return;
+  fila = []; reg = {}; turmas = []; pronto = false;
   sess = null; LS.del("ch:sess"); mostrar("telaLogin");
 };
 
 $("data").onchange = renderDia;
 
-$("btnTodos").onclick = function(){
-  var d = diaAtual(), iso = $("data").value;
-  turma().alunos.forEach(function(al){
-    d[al.id] = {p:"P", e:"dia", d:null};
-    enfileirar(al.id, iso, d[al.id]);
-  });
-  salvaReg(); renderDia();
-};
-
-$("btnLimpar").onclick = function(){
-  var iso = $("data").value;
-  if(!confirm("Apagar os registros de " + turma().nome + " em " + dataBR(iso) + "?")) return;
-  var d = diaAtual();
-  turma().alunos.forEach(function(al){
-    d[al.id] = {p:null, e:null, d:null};
-    enfileirar(al.id, iso, d[al.id]);
-  });
-  salvaReg(); renderDia();
-};
+$("btnEnviar").onclick = escoar;
 
 $("btnCopiaDia").onclick = function(e){ copiar(textoDia(), e.currentTarget); };
 $("btnCopiaRes").onclick = function(e){ copiar(textoResumo(), e.currentTarget); };
@@ -771,35 +768,22 @@ $("btnSalvarRegra").onclick = function(e){
   });
 };
 
-$("btnSincronizar").onclick = function(e){
-  var b = e.currentTarget, rot = b.textContent;
-  b.textContent = "Sincronizando...";
-  escoar().then(function(){ return baixarRegistros().catch(function(){}); }).then(function(){
-    renderDia(); renderResumo(); renderAjustes();
-    b.textContent = fila.length ? fila.length + " ainda pendente(s)" : "Tudo sincronizado";
-    setTimeout(function(){ b.textContent = rot; }, 2200);
-  });
-};
-
-$("btnRecarregar").onclick = function(e){
-  var b = e.currentTarget, rot = b.textContent;
-  b.textContent = "Recarregando...";
-  baixarTurmas().then(baixarRegistros).then(function(){
-    montarChips(); renderDia(); renderResumo(); renderAjustes();
-    b.textContent = "Pronto";
-  }).catch(function(){ b.textContent = "Falhou"; }).then(function(){
-    setTimeout(function(){ b.textContent = rot; }, 2000);
-  });
-};
+$("btnSincronizar").onclick = function(){ if(!escoando) iniciarApp(); };
+$("btnRecarregar").onclick = function(){ if(!escoando) iniciarApp(); };
 
 $("veu").onclick = fecharFolha;
-$("fData").oninput = calc;
+$("fData").oninput = function(){
+  if(!alvo || !podeEditar()) return;
+  var m = diaAtual()[alvo.al.id];
+  if(m && m.e === "atr" && $("fData").value){ m.d = $("fData").value; gravar(alvo.al.id, alvo.iso, m); }
+  calc();
+};
 
 (function(){
   var opts = document.querySelectorAll("#folha .opt");
   for(var i = 0; i < opts.length; i++){
     opts[i].onclick = function(ev){
-      if(!alvo) return;
+      if(!alvo || !podeEditar()) return;
       var o = ev.currentTarget, e = o.getAttribute("data-e") || "";
       var d = diaAtual();
       if(!d[alvo.al.id]) d[alvo.al.id] = {};
@@ -834,8 +818,9 @@ tD.onclick = function(){ aba(tD); };
 tR.onclick = function(){ aba(tR); };
 tC.onclick = function(){ aba(tC); };
 
-addEventListener("online", function(){ badge(); escoar(); });
-addEventListener("offline", badge);
+addEventListener("online", function(){ if(!pronto) iniciarApp(); else { badge(); aviso("Conexão restabelecida. Toque em Enviar para salvar as marcações pendentes."); } });
+addEventListener("beforeunload", function(e){ if(fila.length){ e.preventDefault(); e.returnValue = ""; } });
+addEventListener("offline", function(){ fecharFolha(); badge(); aviso("Sem internet. Edição e envio bloqueados. Mantenha esta página aberta para preservar as marcações não enviadas."); });
 
 /* ---------- partida ---------- */
 $("data").value = hojeISO();
