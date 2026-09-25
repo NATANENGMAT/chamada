@@ -153,6 +153,7 @@ function render(filtro){
         if(m.p === "FJ") h += '<span class="mk fj">falta justificada</span>';
         if(m.e === "dia") h += '<span class="mk dia">entregou no dia</span>';
         if(m.e === "atr") h += '<span class="mk atr">entregou atrasado</span>';
+        if(m.e === "sem") h += '<span class="mk">sem atividade</span>';
         if(m.e === "nao") h += '<span class="mk nao">não entregou</span>';
         h += '</div>';
       });

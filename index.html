@@ -181,6 +181,7 @@ margin-bottom:7px;cursor:pointer}
   <div class="ctrl">
     <input type="date" id="data">
     <button class="mini" id="btnEnviar" disabled>Enviar</button>
+    <button class="mini ghost" id="btnSemAtividade" aria-pressed="false">Não teve atividade neste dia</button>
   </div>
   <p id="statusEnvio" class="note" role="status" aria-live="polite">Carregando dados do banco...</p>
   <div class="tally">
@@ -346,11 +347,17 @@ function baixarTurmas(){
 }
 
 function baixarRegistros(){
-  return api("/rest/v1/registros?select=aluno_id,data,presenca,entrega,data_entrega&limit=20000")
-  .then(function(r){
-    if(!r.ok) throw new Error("registros " + r.status);
-    return r.json();
-  }).then(function(linhas){
+  var linhasTodas = [];
+  function pagina(offset){
+    return api("/rest/v1/registros?select=aluno_id,data,presenca,entrega,data_entrega&order=data,aluno_id&limit=1000&offset=" + offset).then(function(r){
+      if(!r.ok) throw new Error("registros " + r.status);
+      return r.json();
+    }).then(function(linhas){
+      linhasTodas = linhasTodas.concat(linhas);
+      return linhas.length === 1000 ? pagina(offset + linhas.length) : linhasTodas;
+    });
+  }
+  return pagina(0).then(function(linhas){
     var deQuem = {};
     turmas.forEach(function(t){ t.alunos.forEach(function(a){ deQuem[a.id] = t.id; }); });
     var novo = {};
@@ -426,9 +433,12 @@ function escoar(){
 }
 function badge(){
   var b = $("badge");
+  $("btnSemAtividade").disabled = !podeEditar();
+  $("btnSemAtividade").setAttribute("aria-pressed", String(diaSemAtividade()));
+  $("btnSemAtividade").textContent = diaSemAtividade() ? "Sem atividade neste dia · desfazer" : "Não teve atividade neste dia";
   $("btnEnviar").disabled = !podeEditar() || !fila.length;
   $("btnEnviar").textContent = escoando ? "Enviando..." : "Enviar";
-  document.querySelectorAll("#lista button, #folha button, #folha input, #viewRes input, #viewRes button").forEach(function(el){ el.disabled = !podeEditar(); });
+  document.querySelectorAll("#lista button, #folha button, #folha input, #viewRes input, #viewRes button").forEach(function(el){ el.disabled = !podeEditar() || (el.classList.contains("a") && diaSemAtividade()); });
   if(!navigator.onLine){ b.className = "tag off"; b.textContent = "Sem internet — edição bloqueada"; return; }
   if(!pronto){ b.className = "tag off"; b.textContent = "Dados indisponíveis"; return; }
   if(fila.length){ b.className = "tag fila"; b.textContent = fila.length + " a enviar"; return; }
@@ -460,8 +470,44 @@ function diaAtual(){
   return reg[turmaAtual][iso];
 }
 
+function diaSemAtividade(){
+  var d = diaAtual(), ids = Object.keys(d);
+  return ids.length > 0 && ids.every(function(id){ return d[id].e === "sem"; });
+}
+function prepararDia(){
+  if(!podeEditar() || !$("data").value || !turmaAtual) return;
+  var d = diaAtual();
+  // Só inicializar uma data inteiramente nova; não completar nem reescrever históricos.
+  if(Object.keys(d).length) return;
+  turma().alunos.forEach(function(al){
+    d[al.id] = {p:"P", e:"nao", d:null};
+    enfileirar(al.id, $("data").value, d[al.id]);
+  });
+}
+function alternarPresenca(m){
+  m.p = PROX_P[String(m.p || null)];
+  if(m.p === "F" && m.e !== "sem"){ m.e = "nao"; m.d = null; }
+}
+var entregasAntes = {};
+function alternarAtividade(){
+  if(!podeEditar()) return;
+  var d = diaAtual(), iso = $("data").value, chave = turmaAtual + "|" + iso;
+  var sem = diaSemAtividade();
+  if(!sem) entregasAntes[chave] = JSON.parse(JSON.stringify(d));
+  turma().alunos.forEach(function(al){
+    var m = d[al.id] || {p:null};
+    var anterior = entregasAntes[chave] && entregasAntes[chave][al.id];
+    m.e = sem ? (anterior ? anterior.e : "nao") : "sem";
+    m.d = sem && anterior ? anterior.d : null;
+    if(m.p === "F" && m.e !== "sem"){ m.e = "nao"; m.d = null; }
+    d[al.id] = m; enfileirar(al.id, iso, m);
+  });
+  if(sem) delete entregasAntes[chave];
+  renderDia(); renderResumo();
+}
+
 function valor(m, dataAula){
-  if(!m || !m.e) return null;
+  if(!m || !m.e || m.e === "sem") return null;
   if(m.e === "nao") return 0;
   if(m.e === "dia") return regra.vDia;
   var dEnt = m.d || dataAula;
@@ -476,17 +522,19 @@ function valor(m, dataAula){
 var PROX_P = {"null":"P", "P":"F", "F":"FJ", "FJ":null};
 
 function rotEntrega(m, dataAula){
+  if(m && m.e === "sem") return "Sem atividade";
   if(!m || !m.e) return "—";
   if(m.e === "dia") return "No dia";
   if(m.e === "nao") return "Não";
   return "Atr. " + Math.max(0, diasEntre(dataAula, m.d || dataAula)) + "d";
 }
 function clsEntrega(m){
-  if(!m || !m.e) return "";
+  if(!m || !m.e || m.e === "sem") return "";
   return m.e === "dia" ? " yes" : (m.e === "atr" ? " late" : " no");
 }
 
 function renderDia(){
+  prepararDia();
   var t = turma(), d = diaAtual(), iso = $("data").value, host = $("lista");
   host.innerHTML = "";
   var p=0, f=0, j=0, a=0, n=0;
@@ -508,7 +556,7 @@ function renderDia(){
     bp.onclick = function(){
       if(!podeEditar()) return;
       if(!d[al.id]) d[al.id] = {};
-      d[al.id].p = PROX_P[String(d[al.id].p || null)];
+      alternarPresenca(d[al.id]);
       gravar(al.id, iso, d[al.id]);
     };
 
@@ -527,7 +575,7 @@ function gravar(alunoId, iso, m){ salvaReg(); enfileirar(alunoId, iso, m); rende
 
 /* ---------- folha ---------- */
 function abrirFolha(al){
-  if(!podeEditar()) return;
+  if(!podeEditar() || diaSemAtividade()) return;
   var iso = $("data").value;
   alvo = {al: al, iso: iso};
   var m = diaAtual()[al.id] || {};
@@ -581,6 +629,7 @@ function renderResumo(){
     host.innerHTML = '<div class="empty">Nenhuma aula registrada nesta turma ainda.</div>';
     return;
   }
+  var atividades = datas.filter(function(iso){ return Object.keys(porData[iso]).some(function(id){ return valor(porData[iso][id], iso) !== null; }); }).length;
   var h = '<table><thead><tr><th>Aluno</th><th class="n">F</th><th class="n">FJ</th><th class="n">Dia</th>' +
           '<th class="n">Atr</th><th class="n">Não</th><th class="n">Nota</th></tr></thead><tbody>';
   t.alunos.forEach(function(al){
@@ -592,6 +641,7 @@ function renderResumo(){
   });
   h += '</tbody></table><p class="note">' + datas.length + ' aula' + (datas.length > 1 ? "s" : "") +
        ' de ' + curto(datas[0]) + ' a ' + curto(datas[datas.length-1]) + '.</p>';
+  h += '<p class="note">' + atividades + ' atividade(s) no cálculo. Dias sem atividade não entram na média.</p>';
   host.innerHTML = h;
 }
 
@@ -649,7 +699,7 @@ function textoDia(){
     if(m.e === "nao") nao.push(id);
   });
   function bl(tit, arr){ return tit + " (" + arr.length + ")\n" + (arr.length ? arr.join("\n") : "nenhum"); }
-  return [t.nome + " — " + dataBR(iso), "", bl("Faltas", faltas), "", bl("Faltas justificadas", just),
+  return [t.nome + " — " + dataBR(iso), diaSemAtividade() ? "Não teve atividade neste dia (fora do cálculo)." : "", bl("Faltas", faltas), "", bl("Faltas justificadas", just),
           "", bl("Entregou atrasado", atras), "", bl("Não entregou", nao)].join("\n");
 }
 
@@ -740,6 +790,7 @@ $("btnSair").onclick = function(){
 $("data").onchange = renderDia;
 
 $("btnEnviar").onclick = escoar;
+$("btnSemAtividade").onclick = alternarAtividade;
 
 $("btnCopiaDia").onclick = function(e){ copiar(textoDia(), e.currentTarget); };
 $("btnCopiaRes").onclick = function(e){ copiar(textoResumo(), e.currentTarget); };
