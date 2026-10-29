@@ -133,6 +133,20 @@ margin-bottom:7px;cursor:pointer}
 .entregue .lb{font-size:12px;color:var(--soft);margin-bottom:7px}
 .calc{font-size:13px;font-weight:700;margin-top:9px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.calendar{margin:14px 0 10px;min-width:0}
+.period{font:700 10px var(--mono);letter-spacing:.1em;color:var(--margin);margin:0 0 8px}
+.date-nav{display:flex;gap:6px;align-items:center;min-width:0}
+.date-arrow{flex:none;width:40px;height:56px;border:1px solid var(--rule);border-radius:11px;background:#fff;color:var(--ink);font-size:30px;cursor:pointer}
+.date-arrow:disabled{opacity:.3;cursor:default}
+.date-tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;min-width:0;flex:1;padding:3px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+.date-tabs::-webkit-scrollbar{display:none}
+.date-tab{flex:0 0 64px;min-height:70px;padding:7px 4px;border:1px solid var(--rule);border-radius:12px;background:white;color:var(--soft);font:600 11px var(--sys);scroll-snap-align:center;cursor:pointer}
+.date-tab strong{display:block;font-size:22px;line-height:1.2;color:var(--ink)}
+.date-tab span{display:block;font-size:10px;text-transform:uppercase}
+.date-tab[aria-selected=true]{background:var(--ink);border-color:var(--ink);color:#fff}
+.date-tab[aria-selected=true] strong{color:#fff}
+.date-tab:focus-visible,.date-arrow:focus-visible{outline:3px solid var(--mark);outline-offset:1px}
+.date-label{font-size:12px;color:var(--soft);margin:7px 0 0;text-align:center}
 </style>
 </head>
 <body>
@@ -178,9 +192,19 @@ margin-bottom:7px;cursor:pointer}
 <div class="bar" id="chips"></div>
 
 <section id="viewDia">
+  <div class="calendar" aria-label="Datas das aulas">
+    <p class="period">28 OUT — 21 DEZ 2026</p>
+    <div class="date-nav">
+      <button type="button" class="date-arrow" id="diaAnterior" aria-label="Dia anterior">‹</button>
+      <div id="dateTabs" class="date-tabs" role="tablist" aria-label="Escolha o dia da aula"></div>
+      <button type="button" class="date-arrow" id="diaSeguinte" aria-label="Próximo dia">›</button>
+    </div>
+    <p id="dateLabel" class="date-label" aria-live="polite"></p>
+    <input type="hidden" id="data">
+  </div>
   <div class="ctrl">
-    <input type="date" id="data">
     <button class="mini" id="btnEnviar" disabled>Enviar</button>
+    <button class="mini ghost" id="btnPrepararDia">Iniciar chamada: todos presentes</button>
     <button class="mini ghost" id="btnSemAtividade" aria-pressed="false">Não teve atividade neste dia</button>
   </div>
   <p id="statusEnvio" class="note" role="status" aria-live="polite">Carregando dados do banco...</p>
@@ -264,6 +288,8 @@ var LS = {
 
 var cfg    = LS.get("ch:cfg", null);
 var sess   = LS.get("ch:sess", null);
+var PERIODO_INICIO = "2026-10-28", PERIODO_FIM = "2026-12-21";
+var DATAS_EXCLUIDAS = ["2026-10-28","2026-11-02","2026-11-15","2026-11-20","2026-12-08","2026-12-25"];
 var regra  = LS.get("ch:regra", {vDia:10, zera:5, fim:"2026-09-24", justSemDesconto:true});
 var turmas = [];
 var reg    = {};
@@ -405,7 +431,7 @@ function enfileirar(alunoId, data, m){
 }
 
 function aviso(texto){ $("statusEnvio").textContent = texto; }
-function podeEditar(){ return pronto && navigator.onLine && !escoando; }
+function podeEditar(){ return pronto && navigator.onLine && !escoando && noPeriodo($("data").value); }
 function escoar(){
   if(!podeEditar() || !fila.length || !sess || !cfg) return Promise.resolve(false);
   escoando = true; badge();
@@ -463,6 +489,67 @@ function esc(s){ return String(s).replace(/[&<>]/g, function(c){
   return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c]; }); }
 function fmt(v){ return (v === null || v === undefined) ? "—" : Number(v).toFixed(1).replace(".", ","); }
 
+function noPeriodo(iso){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(iso || "") || iso < PERIODO_INICIO || iso > PERIODO_FIM) return false;
+  var d = new Date(iso + "T12:00:00Z");
+  return !isNaN(d.getTime()) && d.toISOString().slice(0,10) === iso && d.getUTCDay() !== 0 && d.getUTCDay() !== 6 && DATAS_EXCLUIDAS.indexOf(iso) < 0;
+}
+function limitarData(iso){
+  var dias = diasPeriodo();
+  if(noPeriodo(iso)) return iso;
+  for(var i = 0; i < dias.length; i++) if(dias[i] >= iso) return dias[i];
+  return dias[dias.length-1] || "";
+}
+function diasPeriodo(){
+  var dias = [], d = new Date(PERIODO_INICIO + "T12:00:00Z");
+  while(d.toISOString().slice(0,10) <= PERIODO_FIM){
+    var iso = d.toISOString().slice(0,10);
+    if(noPeriodo(iso)) dias.push(iso);
+    d.setUTCDate(d.getUTCDate()+1);
+  }
+  return dias;
+}
+function montarDatas(){
+  var host = $("dateTabs"), meses = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+  host.innerHTML = "";
+  diasPeriodo().forEach(function(iso){
+    var b = document.createElement("button"), d = ymd(iso);
+    b.type = "button"; b.className = "date-tab"; b.dataset.date = iso;
+    b.setAttribute("role", "tab"); b.setAttribute("aria-controls", "lista");
+    b.setAttribute("aria-label", dataBR(iso));
+    b.innerHTML = DIAS[d.getDay()].slice(0,3) + '<strong>' + d.getDate() + '</strong><span>' + meses[d.getMonth()] + '</span>';
+    b.onclick = function(){ selecionarData(iso); };
+    b.onkeydown = function(e){
+      var n = diasPeriodo(), i = n.indexOf(iso), next = null;
+      if(e.key === "ArrowLeft") next = n[Math.max(0,i-1)];
+      if(e.key === "ArrowRight") next = n[Math.min(n.length-1,i+1)];
+      if(e.key === "Home") next = n[0];
+      if(e.key === "End") next = n[n.length-1];
+      if(next){ e.preventDefault(); selecionarData(next); host.querySelector('[data-date="'+next+'"]').focus({preventScroll:true}); }
+    };
+    host.appendChild(b);
+  });
+  atualizarDatas(true);
+}
+function atualizarDatas(centralizar){
+  var iso = $("data").value = limitarData($("data").value);
+  Array.from($("dateTabs").children).forEach(function(b){
+    var ativo = b.dataset.date === iso;
+    b.setAttribute("aria-selected", String(ativo)); b.tabIndex = ativo ? 0 : -1;
+    if(ativo && centralizar) $("dateTabs").scrollLeft = b.offsetLeft - $("dateTabs").offsetLeft - ($("dateTabs").clientWidth-b.offsetWidth)/2;
+  });
+  $("diaAnterior").disabled = iso === diasPeriodo()[0];
+  $("diaSeguinte").disabled = iso === diasPeriodo().slice(-1)[0];
+  $("dateLabel").textContent = dataBR(iso);
+}
+function selecionarData(iso){
+  if(!noPeriodo(iso) || iso === $("data").value) return;
+  fecharFolha(); $("data").value = iso; atualizarDatas(true); renderDia();
+}
+function moverData(delta){
+  var dias = diasPeriodo(), i = dias.indexOf($("data").value);
+  selecionarData(dias[Math.max(0,Math.min(dias.length-1,i+delta))]);
+}
 function diaAtual(){
   var iso = $("data").value;
   if(!reg[turmaAtual]) reg[turmaAtual] = {};
@@ -534,7 +621,7 @@ function clsEntrega(m){
 }
 
 function renderDia(){
-  prepararDia();
+  atualizarDatas(false);
   var t = turma(), d = diaAtual(), iso = $("data").value, host = $("lista");
   host.innerHTML = "";
   var p=0, f=0, j=0, a=0, n=0;
@@ -567,6 +654,7 @@ function renderDia(){
 
     host.appendChild(row);
   });
+  $("btnPrepararDia").disabled = !podeEditar() || Object.keys(d).length > 0;
   $("cP").textContent = p; $("cF").textContent = f; $("cJ").textContent = j;
   $("cA").textContent = a; $("cN").textContent = n; badge();
 }
@@ -738,12 +826,12 @@ function montarChips(){
 
 function iniciarApp(){
   mostrar("telaApp"); pronto = false; badge();
-  if(!$("data").value) $("data").value = hojeISO();
+  if(!$("data").value) $("data").value = limitarData(hojeISO());
   return baixarTurmas().then(baixarRegra).then(baixarRegistros).then(function(){
     pronto = true;
     $("vDia").value = regra.vDia; $("vZera").value = regra.zera; $("vFim").value = regra.fim;
     $("swJust").classList.toggle("on", !!regra.justSemDesconto);
-    montarChips(); renderEscala(); renderDia(); renderResumo(); renderAjustes();
+    montarChips(); renderEscala(); renderDia(); atualizarDatas(true); renderResumo(); renderAjustes();
     aviso(fila.length ? "Há marcações não enviadas. Toque em Enviar para salvar." : "Online. Faça as marcações e toque em Enviar para salvar.");
     if(LS.get("ch:fila", []).length) aviso("Há pendências da versão antiga guardadas neste aparelho. Elas não foram enviadas. Confira os registros antes de lançar novamente.");
   }).catch(function(){ aviso("Não foi possível carregar os dados do banco. Verifique a internet e toque em Recarregar turmas e alunos, em Ajustes."); }).then(badge);
@@ -787,9 +875,11 @@ $("btnSair").onclick = function(){
   sess = null; LS.del("ch:sess"); mostrar("telaLogin");
 };
 
-$("data").onchange = renderDia;
+$("diaAnterior").onclick = function(){ moverData(-1); };
+$("diaSeguinte").onclick = function(){ moverData(1); };
 
 $("btnEnviar").onclick = escoar;
+$("btnPrepararDia").onclick = function(){ prepararDia(); renderDia(); };
 $("btnSemAtividade").onclick = alternarAtividade;
 
 $("btnCopiaDia").onclick = function(e){ copiar(textoDia(), e.currentTarget); };
@@ -862,6 +952,7 @@ function aba(qual){
     $(par[1]).classList.toggle("hide", par[0] !== qual);
   });
   $("chips").classList.toggle("hide", qual === tC);
+  if(qual === tD) atualizarDatas(true);
   if(qual === tR) renderResumo();
   if(qual === tC) renderAjustes();
 }
@@ -874,7 +965,8 @@ addEventListener("beforeunload", function(e){ if(fila.length){ e.preventDefault(
 addEventListener("offline", function(){ fecharFolha(); badge(); aviso("Sem internet. Edição e envio bloqueados. Mantenha esta página aberta para preservar as marcações não enviadas."); });
 
 /* ---------- partida ---------- */
-$("data").value = hojeISO();
+$("data").value = limitarData(hojeISO());
+montarDatas();
 if(!cfg) mostrar("telaCfg");
 else if(!sess) mostrar("telaLogin");
 else iniciarApp();
@@ -884,3 +976,4 @@ if("serviceWorker" in navigator)
 </script>
 </body>
 </html>
+
