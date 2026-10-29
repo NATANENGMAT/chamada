@@ -17,23 +17,32 @@ jobs:
           KEY="sb_publishable_OqV9st0ZV1fdPA4Zppf1DQ_-aRvuIis"
 
           for i in 1 2 3 4 5; do
-            CODE=$(curl -s -o /tmp/resposta.txt -w "%{http_code}" --max-time 30 \
+            CURL_EXIT=0
+            CODE=$(curl -sS -o /dev/null -w "%{http_code}" --connect-timeout 10 --max-time 30 \
               -X POST "$URL/rest/v1/rpc/resumo_turma" \
               -H "apikey: $KEY" \
               -H "Authorization: Bearer $KEY" \
               -H "Content-Type: application/json" \
-              -d '{"p_token":"keepalive"}')
+              -d '{"p_token":"keepalive"}') || CURL_EXIT=$?
 
-            echo "Tentativa $i — HTTP $CODE"
-            head -c 300 /tmp/resposta.txt; echo
+            echo "Tentativa $i — curl $CURL_EXIT — HTTP $CODE"
 
-            if [ "$CODE" -ge 200 ] && [ "$CODE" -lt 500 ]; then
-              echo "Banco respondeu. Projeto continua ativo."
+            if [ "$CURL_EXIT" -eq 0 ] && [[ "$CODE" =~ ^[234][0-9][0-9]$ ]]; then
+              if [[ "$CODE" =~ ^4 ]]; then
+                echo "::warning::Endpoint respondeu HTTP $CODE. Isso nao confirma acesso ao banco nem sucesso da RPC."
+              else
+                echo "Endpoint respondeu HTTP $CODE."
+              fi
               exit 0
             fi
 
-            echo "Sem resposta. Aguardando para tentar de novo..."
-            sleep $((i * 20))
+            if [ "$CURL_EXIT" -eq 6 ]; then
+              echo "::warning::Falha de DNS: confira a URL e o estado do projeto no painel Supabase."
+            fi
+            if [ "$i" -lt 5 ]; then
+              echo "Tentativa falhou. Aguardando para tentar de novo..."
+              sleep $((i * 20))
+            fi
           done
 
           echo "::error::O Supabase nao respondeu apos 5 tentativas. Verifique o painel."
