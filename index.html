@@ -204,7 +204,6 @@ margin-bottom:7px;cursor:pointer}
   </div>
   <div class="ctrl">
     <button class="mini" id="btnEnviar" disabled>Enviar</button>
-    <button class="mini ghost" id="btnPrepararDia">Iniciar chamada: todos presentes</button>
     <button class="mini ghost" id="btnSemAtividade" aria-pressed="false">Não teve atividade neste dia</button>
   </div>
   <p id="statusEnvio" class="note" role="status" aria-live="polite">Carregando dados do banco...</p>
@@ -573,7 +572,7 @@ function prepararDia(){
 }
 function alternarPresenca(m){
   m.p = PROX_P[String(m.p || null)];
-  if(m.p === "F" && m.e !== "sem"){ m.e = "nao"; m.d = null; }
+  if(m.p === "F"){ m.e = "nao"; m.d = null; }
 }
 var entregasAntes = {};
 function alternarAtividade(){
@@ -622,6 +621,7 @@ function clsEntrega(m){
 
 function renderDia(){
   atualizarDatas(false);
+  prepararDia();
   var t = turma(), d = diaAtual(), iso = $("data").value, host = $("lista");
   host.innerHTML = "";
   var p=0, f=0, j=0, a=0, n=0;
@@ -654,7 +654,6 @@ function renderDia(){
 
     host.appendChild(row);
   });
-  $("btnPrepararDia").disabled = !podeEditar() || Object.keys(d).length > 0;
   $("cP").textContent = p; $("cF").textContent = f; $("cJ").textContent = j;
   $("cA").textContent = a; $("cN").textContent = n; badge();
 }
@@ -879,7 +878,6 @@ $("diaAnterior").onclick = function(){ moverData(-1); };
 $("diaSeguinte").onclick = function(){ moverData(1); };
 
 $("btnEnviar").onclick = escoar;
-$("btnPrepararDia").onclick = function(){ prepararDia(); renderDia(); };
 $("btnSemAtividade").onclick = alternarAtividade;
 
 $("btnCopiaDia").onclick = function(e){ copiar(textoDia(), e.currentTarget); };
