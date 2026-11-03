@@ -42,6 +42,10 @@ border:1px solid var(--rule);background:#fff;color:var(--soft);cursor:pointer}
 .chip.on{background:var(--mark);border-color:#DCA92F;color:var(--ink)}
 
 .ctrl{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin:8px 0 2px}
+.date-nav{display:flex;gap:5px;align-items:center;max-width:100%}
+.date-nav .mini{min-width:44px;min-height:44px;font-size:20px;padding:5px 10px}
+.date-nav .mini:disabled{opacity:.35;cursor:default;transform:none}
+.date-nav select{min-width:0;flex:1;font:inherit;font-size:16px;font-weight:600;padding:9px 10px;border:1px solid var(--rule);border-radius:10px;background:#fff;color:var(--ink)}
 input[type=date],input[type=email],input[type=password],input[type=text]{font:inherit;font-size:16px;
 padding:11px;border:1px solid var(--rule);border-radius:10px;background:#fff;color:var(--ink);width:100%}
 input[type=date]{width:auto;font-weight:600;padding:9px 10px}
@@ -133,20 +137,6 @@ margin-bottom:7px;cursor:pointer}
 .entregue .lb{font-size:12px;color:var(--soft);margin-bottom:7px}
 .calc{font-size:13px;font-weight:700;margin-top:9px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
-.calendar{margin:14px 0 10px;min-width:0}
-.period{font:700 10px var(--mono);letter-spacing:.1em;color:var(--margin);margin:0 0 8px}
-.date-nav{display:flex;gap:6px;align-items:center;min-width:0}
-.date-arrow{flex:none;width:40px;height:56px;border:1px solid var(--rule);border-radius:11px;background:#fff;color:var(--ink);font-size:30px;cursor:pointer}
-.date-arrow:disabled{opacity:.3;cursor:default}
-.date-tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;min-width:0;flex:1;padding:3px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
-.date-tabs::-webkit-scrollbar{display:none}
-.date-tab{flex:0 0 64px;min-height:70px;padding:7px 4px;border:1px solid var(--rule);border-radius:12px;background:white;color:var(--soft);font:600 11px var(--sys);scroll-snap-align:center;cursor:pointer}
-.date-tab strong{display:block;font-size:22px;line-height:1.2;color:var(--ink)}
-.date-tab span{display:block;font-size:10px;text-transform:uppercase}
-.date-tab[aria-selected=true]{background:var(--ink);border-color:var(--ink);color:#fff}
-.date-tab[aria-selected=true] strong{color:#fff}
-.date-tab:focus-visible,.date-arrow:focus-visible{outline:3px solid var(--mark);outline-offset:1px}
-.date-label{font-size:12px;color:var(--soft);margin:7px 0 0;text-align:center}
 </style>
 </head>
 <body>
@@ -192,20 +182,16 @@ margin-bottom:7px;cursor:pointer}
 <div class="bar" id="chips"></div>
 
 <section id="viewDia">
-  <div class="calendar" aria-label="Datas das aulas">
-    <p class="period">28 OUT — 21 DEZ 2026</p>
-    <div class="date-nav">
-      <button type="button" class="date-arrow" id="diaAnterior" aria-label="Dia anterior">‹</button>
-      <div id="dateTabs" class="date-tabs" role="tablist" aria-label="Escolha o dia da aula"></div>
-      <button type="button" class="date-arrow" id="diaSeguinte" aria-label="Próximo dia">›</button>
-    </div>
-    <p id="dateLabel" class="date-label" aria-live="polite"></p>
-    <input type="hidden" id="data">
-  </div>
   <div class="ctrl">
+    <div class="date-nav" role="group" aria-label="Data da chamada">
+      <button type="button" class="mini" id="btnDiaAnterior" aria-label="Dia anterior">&#8592;</button>
+      <select id="data" aria-label="Data da chamada" aria-describedby="periodoChamada"></select>
+      <button type="button" class="mini" id="btnDiaSeguinte" aria-label="Dia seguinte">&#8594;</button>
+    </div>
     <button class="mini" id="btnEnviar" disabled>Enviar</button>
     <button class="mini ghost" id="btnSemAtividade" aria-pressed="false">Não teve atividade neste dia</button>
   </div>
+  <p id="periodoChamada" class="note">Período: 12/10/2026 a 30/11/2026, de segunda a sexta.</p>
   <p id="statusEnvio" class="note" role="status" aria-live="polite">Carregando dados do banco...</p>
   <div class="tally">
     <div class="t g"><b id="cP">0</b><span>Presentes</span></div>
@@ -226,7 +212,7 @@ margin-bottom:7px;cursor:pointer}
     <h3>Regra da nota</h3>
     <div class="field"><label>Entrega no dia vale</label><input type="number" id="vDia" step="0.1" min="0" max="10" value="10"></div>
     <div class="field"><label>Zera com quantos dias de atraso</label><input type="number" id="vZera" step="1" min="1" max="30" value="5"></div>
-    <div class="field"><label>Último dia do bimestre</label><input type="date" id="vFim" value="2026-09-24"></div>
+    <div class="field"><label>Último dia do bimestre</label><input type="date" id="vFim" value="2026-12-21"></div>
     <div class="field"><label>Falta justificada entrega sem desconto</label>
       <button class="sw on" id="swJust" role="switch" aria-checked="true" aria-label="Falta justificada sem desconto"></button></div>
     <div class="escala" id="escala"></div>
@@ -287,9 +273,10 @@ var LS = {
 
 var cfg    = LS.get("ch:cfg", null);
 var sess   = LS.get("ch:sess", null);
-var PERIODO_INICIO = "2026-10-28", PERIODO_FIM = "2026-12-21";
-var DATAS_EXCLUIDAS = ["2026-10-28","2026-11-02","2026-11-15","2026-11-20","2026-12-08","2026-12-25"];
-var regra  = LS.get("ch:regra", {vDia:10, zera:5, fim:"2026-09-24", justSemDesconto:true});
+var INICIO_CONTAGEM = "2026-10-29", FIM_BIMESTRE = "2026-12-21"; // notas e faltas só contam a partir de 29/10
+var regra  = LS.get("ch:regra", {vDia:10, zera:5, fim:FIM_BIMESTRE, justSemDesconto:true});
+function ajustarFim(){ if(!regra.fim || regra.fim < INICIO_CONTAGEM) regra.fim = FIM_BIMESTRE; }
+ajustarFim();
 var turmas = [];
 var reg    = {};
 var fila = []; // Rascunhos apenas nesta sessão; nunca enviados automaticamente.
@@ -408,6 +395,7 @@ function baixarRegra(){
     return r.json().then(function(b){
       if(b.length && b[0].valor){
         for(var k in b[0].valor) regra[k] = b[0].valor[k];
+        ajustarFim();
         LS.set("ch:regra", regra);
       }
     });
@@ -430,7 +418,7 @@ function enfileirar(alunoId, data, m){
 }
 
 function aviso(texto){ $("statusEnvio").textContent = texto; }
-function podeEditar(){ return pronto && navigator.onLine && !escoando && noPeriodo($("data").value); }
+function podeEditar(){ return pronto && navigator.onLine && !escoando; }
 function escoar(){
   if(!podeEditar() || !fila.length || !sess || !cfg) return Promise.resolve(false);
   escoando = true; badge();
@@ -480,6 +468,30 @@ function hojeISO(){
   var d = new Date();
   return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
 }
+function ajustarData(iso){
+  var campo = $("data");
+  if(!campo.options.length){
+    var d = ymd("2026-10-12"), fim = ymd("2026-11-30");
+    for(; d <= fim; d.setDate(d.getDate() + 1)){
+      if(d.getDay() === 0 || d.getDay() === 6) continue;
+      var valor = d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+      var opcao = document.createElement("option");
+      opcao.value = valor; opcao.textContent = dataBR(valor);
+      campo.appendChild(opcao);
+    }
+  }
+  var indice = 0;
+  while(indice < campo.options.length - 1 && campo.options[indice].value < iso) indice++;
+  campo.selectedIndex = indice;
+  $("btnDiaAnterior").disabled = indice === 0;
+  $("btnDiaSeguinte").disabled = indice === campo.options.length - 1;
+}
+function mudarDia(passo){
+  var campo = $("data");
+  var indice = Math.max(0, Math.min(campo.options.length - 1, campo.selectedIndex + passo));
+  ajustarData(campo.options[indice].value);
+  renderDia();
+}
 function ymd(iso){ var p = iso.split("-").map(Number); return new Date(p[0], p[1]-1, p[2]); }
 function diasEntre(a, b){ return Math.round((ymd(b) - ymd(a)) / 86400000); }
 function curto(iso){ return iso ? iso.split("-").reverse().slice(0,2).join("/") : ""; }
@@ -488,67 +500,6 @@ function esc(s){ return String(s).replace(/[&<>]/g, function(c){
   return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c]; }); }
 function fmt(v){ return (v === null || v === undefined) ? "—" : Number(v).toFixed(1).replace(".", ","); }
 
-function noPeriodo(iso){
-  if(!/^\d{4}-\d{2}-\d{2}$/.test(iso || "") || iso < PERIODO_INICIO || iso > PERIODO_FIM) return false;
-  var d = new Date(iso + "T12:00:00Z");
-  return !isNaN(d.getTime()) && d.toISOString().slice(0,10) === iso && d.getUTCDay() !== 0 && d.getUTCDay() !== 6 && DATAS_EXCLUIDAS.indexOf(iso) < 0;
-}
-function limitarData(iso){
-  var dias = diasPeriodo();
-  if(noPeriodo(iso)) return iso;
-  for(var i = 0; i < dias.length; i++) if(dias[i] >= iso) return dias[i];
-  return dias[dias.length-1] || "";
-}
-function diasPeriodo(){
-  var dias = [], d = new Date(PERIODO_INICIO + "T12:00:00Z");
-  while(d.toISOString().slice(0,10) <= PERIODO_FIM){
-    var iso = d.toISOString().slice(0,10);
-    if(noPeriodo(iso)) dias.push(iso);
-    d.setUTCDate(d.getUTCDate()+1);
-  }
-  return dias;
-}
-function montarDatas(){
-  var host = $("dateTabs"), meses = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
-  host.innerHTML = "";
-  diasPeriodo().forEach(function(iso){
-    var b = document.createElement("button"), d = ymd(iso);
-    b.type = "button"; b.className = "date-tab"; b.dataset.date = iso;
-    b.setAttribute("role", "tab"); b.setAttribute("aria-controls", "lista");
-    b.setAttribute("aria-label", dataBR(iso));
-    b.innerHTML = DIAS[d.getDay()].slice(0,3) + '<strong>' + d.getDate() + '</strong><span>' + meses[d.getMonth()] + '</span>';
-    b.onclick = function(){ selecionarData(iso); };
-    b.onkeydown = function(e){
-      var n = diasPeriodo(), i = n.indexOf(iso), next = null;
-      if(e.key === "ArrowLeft") next = n[Math.max(0,i-1)];
-      if(e.key === "ArrowRight") next = n[Math.min(n.length-1,i+1)];
-      if(e.key === "Home") next = n[0];
-      if(e.key === "End") next = n[n.length-1];
-      if(next){ e.preventDefault(); selecionarData(next); host.querySelector('[data-date="'+next+'"]').focus({preventScroll:true}); }
-    };
-    host.appendChild(b);
-  });
-  atualizarDatas(true);
-}
-function atualizarDatas(centralizar){
-  var iso = $("data").value = limitarData($("data").value);
-  Array.from($("dateTabs").children).forEach(function(b){
-    var ativo = b.dataset.date === iso;
-    b.setAttribute("aria-selected", String(ativo)); b.tabIndex = ativo ? 0 : -1;
-    if(ativo && centralizar) $("dateTabs").scrollLeft = b.offsetLeft - $("dateTabs").offsetLeft - ($("dateTabs").clientWidth-b.offsetWidth)/2;
-  });
-  $("diaAnterior").disabled = iso === diasPeriodo()[0];
-  $("diaSeguinte").disabled = iso === diasPeriodo().slice(-1)[0];
-  $("dateLabel").textContent = dataBR(iso);
-}
-function selecionarData(iso){
-  if(!noPeriodo(iso) || iso === $("data").value) return;
-  fecharFolha(); $("data").value = iso; atualizarDatas(true); renderDia();
-}
-function moverData(delta){
-  var dias = diasPeriodo(), i = dias.indexOf($("data").value);
-  selecionarData(dias[Math.max(0,Math.min(dias.length-1,i+delta))]);
-}
 function diaAtual(){
   var iso = $("data").value;
   if(!reg[turmaAtual]) reg[turmaAtual] = {};
@@ -572,7 +523,7 @@ function prepararDia(){
 }
 function alternarPresenca(m){
   m.p = PROX_P[String(m.p || null)];
-  if(m.p === "F"){ m.e = "nao"; m.d = null; }
+  if(m.p === "F" && m.e !== "sem"){ m.e = "nao"; m.d = null; }
 }
 var entregasAntes = {};
 function alternarAtividade(){
@@ -620,7 +571,6 @@ function clsEntrega(m){
 }
 
 function renderDia(){
-  atualizarDatas(false);
   prepararDia();
   var t = turma(), d = diaAtual(), iso = $("data").value, host = $("lista");
   host.innerHTML = "";
@@ -693,12 +643,21 @@ function calc(){
 }
 
 /* ---------- resumo ---------- */
+// Só contam datas a partir de INICIO_CONTAGEM.
+function dataConta(iso){ return iso >= INICIO_CONTAGEM && iso <= FIM_BIMESTRE; }
+// Dia entra na nota só quando pelo menos um aluno foi marcado como entregue (no dia ou atrasado).
+function diaTemAtividade(regsDia){
+  return Object.keys(regsDia || {}).some(function(id){
+    var e = regsDia[id] && regsDia[id].e; return e === "dia" || e === "atr"; });
+}
 function totais(alunoId){
   var porData = reg[turmaAtual] || {};
   var f=0, j=0, d=0, a=0, n=0, soma=0, q=0;
   Object.keys(porData).forEach(function(iso){
+    if(!dataConta(iso)) return;
     var m = porData[iso][alunoId]; if(!m) return;
     if(m.p === "F") f++; if(m.p === "FJ") j++;
+    if(!diaTemAtividade(porData[iso])) return; // presença conta; nota não
     if(m.e === "dia") d++; if(m.e === "atr") a++; if(m.e === "nao") n++;
     var v = valor(m, iso);
     if(v !== null){ soma += v; q++; }
@@ -709,14 +668,14 @@ function totais(alunoId){
 function renderResumo(){
   var t = turma(), host = $("resumo"), porData = reg[turmaAtual] || {};
   var datas = Object.keys(porData).filter(function(iso){
-    return Object.keys(porData[iso]).some(function(k){
+    return dataConta(iso) && Object.keys(porData[iso]).some(function(k){
       return porData[iso][k].p || porData[iso][k].e; });
   }).sort();
   if(!datas.length){
     host.innerHTML = '<div class="empty">Nenhuma aula registrada nesta turma ainda.</div>';
     return;
   }
-  var atividades = datas.filter(function(iso){ return Object.keys(porData[iso]).some(function(id){ return valor(porData[iso][id], iso) !== null; }); }).length;
+  var atividades = datas.filter(function(iso){ return diaTemAtividade(porData[iso]); }).length;
   var h = '<table><thead><tr><th>Aluno</th><th class="n">F</th><th class="n">FJ</th><th class="n">Dia</th>' +
           '<th class="n">Atr</th><th class="n">Não</th><th class="n">Nota</th></tr></thead><tbody>';
   t.alunos.forEach(function(al){
@@ -728,7 +687,7 @@ function renderResumo(){
   });
   h += '</tbody></table><p class="note">' + datas.length + ' aula' + (datas.length > 1 ? "s" : "") +
        ' de ' + curto(datas[0]) + ' a ' + curto(datas[datas.length-1]) + '.</p>';
-  h += '<p class="note">' + atividades + ' atividade(s) no cálculo. Dias sem atividade não entram na média.</p>';
+  h += '<p class="note">' + atividades + ' atividade(s) no cálculo. Só entram na nota os dias em que alguém foi marcado como entregue.</p>';
   host.innerHTML = h;
 }
 
@@ -825,12 +784,12 @@ function montarChips(){
 
 function iniciarApp(){
   mostrar("telaApp"); pronto = false; badge();
-  if(!$("data").value) $("data").value = limitarData(hojeISO());
+  ajustarData($("data").value || hojeISO());
   return baixarTurmas().then(baixarRegra).then(baixarRegistros).then(function(){
     pronto = true;
     $("vDia").value = regra.vDia; $("vZera").value = regra.zera; $("vFim").value = regra.fim;
     $("swJust").classList.toggle("on", !!regra.justSemDesconto);
-    montarChips(); renderEscala(); renderDia(); atualizarDatas(true); renderResumo(); renderAjustes();
+    montarChips(); renderEscala(); renderDia(); renderResumo(); renderAjustes();
     aviso(fila.length ? "Há marcações não enviadas. Toque em Enviar para salvar." : "Online. Faça as marcações e toque em Enviar para salvar.");
     if(LS.get("ch:fila", []).length) aviso("Há pendências da versão antiga guardadas neste aparelho. Elas não foram enviadas. Confira os registros antes de lançar novamente.");
   }).catch(function(){ aviso("Não foi possível carregar os dados do banco. Verifique a internet e toque em Recarregar turmas e alunos, em Ajustes."); }).then(badge);
@@ -874,8 +833,9 @@ $("btnSair").onclick = function(){
   sess = null; LS.del("ch:sess"); mostrar("telaLogin");
 };
 
-$("diaAnterior").onclick = function(){ moverData(-1); };
-$("diaSeguinte").onclick = function(){ moverData(1); };
+$("data").onchange = function(){ ajustarData($("data").value); renderDia(); };
+$("btnDiaAnterior").onclick = function(){ mudarDia(-1); };
+$("btnDiaSeguinte").onclick = function(){ mudarDia(1); };
 
 $("btnEnviar").onclick = escoar;
 $("btnSemAtividade").onclick = alternarAtividade;
@@ -950,7 +910,6 @@ function aba(qual){
     $(par[1]).classList.toggle("hide", par[0] !== qual);
   });
   $("chips").classList.toggle("hide", qual === tC);
-  if(qual === tD) atualizarDatas(true);
   if(qual === tR) renderResumo();
   if(qual === tC) renderAjustes();
 }
@@ -963,8 +922,7 @@ addEventListener("beforeunload", function(e){ if(fila.length){ e.preventDefault(
 addEventListener("offline", function(){ fecharFolha(); badge(); aviso("Sem internet. Edição e envio bloqueados. Mantenha esta página aberta para preservar as marcações não enviadas."); });
 
 /* ---------- partida ---------- */
-$("data").value = limitarData(hojeISO());
-montarDatas();
+ajustarData(hojeISO());
 if(!cfg) mostrar("telaCfg");
 else if(!sess) mostrar("telaLogin");
 else iniciarApp();
@@ -974,4 +932,3 @@ if("serviceWorker" in navigator)
 </script>
 </body>
 </html>
-

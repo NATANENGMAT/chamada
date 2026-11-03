@@ -86,6 +86,7 @@ footer{margin-top:24px;font-size:11.5px;color:var(--soft);text-align:center;line
 
 /* Preenchido no momento de publicar. */
 var SUPABASE_URL = "https://hmnfhqemudatwtdctdvn.supabase.co";
+var INICIO_CONTAGEM = "2026-10-29"; // só conta a partir daqui
 var SUPABASE_KEY = "sb_publishable_OqV9st0ZV1fdPA4Zppf1DQ_-aRvuIis";
 
 var DIAS = ["dom","seg","ter","qua","qui","sex","sáb"];
@@ -111,7 +112,8 @@ var dados = null;
 
 function render(filtro){
   filtro = (filtro || "").trim().toLowerCase();
-  var alunos = dados.alunos || [];
+  var todosAlunos = dados.alunos || [];
+  var alunos = todosAlunos;
   if(filtro) alunos = alunos.filter(function(a){
     return a.nome.toLowerCase().indexOf(filtro) >= 0 || String(a.numero) === filtro; });
 
@@ -123,13 +125,20 @@ function render(filtro){
 
   if(!alunos.length) h += '<div class="aviso">Nenhum aluno encontrado com esse nome.</div>';
 
+  // Dia com atividade = pelo menos um aluno da turma entregou (no dia ou atrasado).
+  var ativ = {};
+  (todosAlunos || alunos).forEach(function(x){ var ds = x.dias || {};
+    Object.keys(ds).forEach(function(k){ if(ds[k].e === "dia" || ds[k].e === "atr") ativ[k] = true; }); });
   alunos.forEach(function(a, i){
-    var dias = a.dias || {}, chaves = Object.keys(dias).sort();
-    var dia = 0, atr = 0, nao = 0;
+    var dias = a.dias || {}, chaves = Object.keys(dias).filter(function(k){ return k >= INICIO_CONTAGEM; }).sort();
+    var dia = 0, atr = 0, nao = 0, faltas = 0, just = 0;
     chaves.forEach(function(k){
-      var e = dias[k].e;
+      var e = dias[k].e, p = dias[k].p;
+      if(p === "F") faltas++; if(p === "FJ") just++;
+      if(!ativ[k]) return;
       if(e === "dia") dia++; if(e === "atr") atr++; if(e === "nao") nao++;
     });
+    a.faltas = faltas; a.just = just;
 
     h += '<div class="card"><div class="topo">' +
          '<span class="num">' + String(a.numero).padStart(2,"0") + '</span>' +
@@ -154,7 +163,7 @@ function render(filtro){
         if(m.e === "dia") h += '<span class="mk dia">entregou no dia</span>';
         if(m.e === "atr") h += '<span class="mk atr">entregou atrasado</span>';
         if(m.e === "sem") h += '<span class="mk">sem atividade</span>';
-        if(m.e === "nao") h += '<span class="mk nao">não entregou</span>';
+        if(m.e === "nao" && ativ[k]) h += '<span class="mk nao">não entregou</span>';
         h += '</div>';
       });
       h += '</div>';
@@ -194,6 +203,7 @@ function render(filtro){
       erro("Link inválido ou desativado. Confira se copiou o endereço inteiro, ou peça um novo ao professor.");
       return;
     }
+    b.datas = (b.datas || []).filter(function(k){ return k >= INICIO_CONTAGEM; });
     dados = b;
     $("tituloTurma").textContent = b.turma;
     var n = (b.datas || []).length;
