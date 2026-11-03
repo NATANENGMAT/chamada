@@ -471,10 +471,13 @@ function hojeISO(){
 function ajustarData(iso){
   var campo = $("data");
   if(!campo.options.length){
-    var d = ymd("2026-10-12"), fim = ymd("2026-11-30");
+    // Dias letivos fixos: 02/11/2026 a 21/12/2026, sem sábados, domingos e feriados do calendário escolar.
+    var FERIADOS = ["2026-11-02", "2026-11-15", "2026-11-20", "2026-12-08"];
+    var d = ymd("2026-11-02"), fim = ymd("2026-12-21");
     for(; d <= fim; d.setDate(d.getDate() + 1)){
       if(d.getDay() === 0 || d.getDay() === 6) continue;
       var valor = d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+      if(FERIADOS.indexOf(valor) !== -1) continue;
       var opcao = document.createElement("option");
       opcao.value = valor; opcao.textContent = dataBR(valor);
       campo.appendChild(opcao);
