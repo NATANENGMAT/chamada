@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Escolha dos Professores — Baile</title>
+<meta name="theme-color" content="#1d6b66">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+:root {
+  --bg: #f5f2ea; --surface: #fffdf7; --ink: #1c2a2b; --muted: #5d6967;
+  --line: #d9d2c2; --accent: #1d6b66; --accent-ink: #ffffff;
+  --gold: #b97a1f; --danger: #9d3a2b; --ok: #2f7a45;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #131a1a; --surface: #1b2525; --ink: #eceee6; --muted: #a2adab;
+    --line: #34403f; --accent: #5fb7b0; --accent-ink: #0e1818;
+    --gold: #e2aa53; --danger: #e58a78; --ok: #7fc795; color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 16px; line-height: 1.5;
+  padding: calc(24px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(48px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+}
+.wrap { max-width: 980px; margin: 0 auto; display: grid; gap: 24px; }
+@media (min-width: 860px) {
+  .wrap { grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); align-items: start; }
+  .sticky { position: sticky; top: 24px; }
+}
+header.top { grid-column: 1 / -1; }
+h1, h2 { font-family: "Fraunces", Georgia, serif; font-weight: 800; letter-spacing: -0.01em; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(27px, 6vw, 40px); line-height: 1.1; }
+h2 { font-size: 21px; font-weight: 600; }
+.lede { color: var(--muted); margin: 10px 0 0; max-width: 62ch; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; min-width: 0; }
+.card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.count { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 14px; font-weight: 600; }
+label.field { display: grid; gap: 6px; font-weight: 600; font-size: 14px; }
+select {
+  font: inherit; font-size: 16px; color: var(--ink); background: var(--bg);
+  border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; min-height: 48px; width: 100%;
+}
+select:disabled { opacity: .7; }
+select:focus-visible, button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.grid-profs { display: grid; grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); gap: 10px; }
+.prof {
+  font: inherit; text-align: left; color: var(--ink); background: var(--bg);
+  border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; min-height: 58px;
+  cursor: pointer; display: grid; gap: 2px; min-width: 0; position: relative;
+}
+.prof strong { font-weight: 600; font-size: 15px; overflow-wrap: anywhere; }
+.prof small { color: var(--muted); font-size: 13px; }
+.prof[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.prof[aria-pressed="true"] small { color: var(--accent-ink); opacity: .85; }
+.prof .pos {
+  position: absolute; top: 6px; right: 6px; width: 22px; height: 22px; border-radius: 50%;
+  display: none; place-items: center; font-size: 12px; font-weight: 700;
+  background: var(--accent-ink); color: var(--accent); font-variant-numeric: tabular-nums;
+}
+.prof[aria-pressed="true"] .pos { display: grid; }
+.prof:disabled { opacity: .45; cursor: not-allowed; }
+ol.slots { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+ol.slots li {
+  display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; gap: 8px;
+  border: 1px dashed var(--line); border-radius: 10px; padding: 6px 8px; min-height: 52px;
+}
+ol.slots li.filled { border: 1px solid var(--line); background: var(--bg); }
+.rank { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+  font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums; background: var(--line); color: var(--ink); }
+li.filled .rank { background: var(--ink); color: var(--surface); }
+li.filled.top3 .rank { background: var(--gold); color: #1c1600; }
+.slot-name { min-width: 0; }
+.slot-name strong { display: block; font-weight: 600; overflow-wrap: anywhere; font-size: 15px; }
+.slot-name small { color: var(--muted); font-size: 13px; }
+.slot-empty { color: var(--muted); font-size: 14px; }
+.tools { display: flex; gap: 4px; }
+.tools button {
+  font: inherit; font-size: 15px; color: var(--ink); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 8px; width: 36px; height: 36px; cursor: pointer; display: grid; place-items: center;
+}
+.tools button:disabled { opacity: .3; cursor: default; }
+.tools button.x { color: var(--danger); }
+.actions { display: grid; gap: 10px; margin-top: 16px; }
+.btn {
+  font: inherit; font-weight: 700; font-size: 16px; color: var(--accent-ink); background: var(--accent);
+  border: 0; border-radius: 12px; min-height: 52px; padding: 12px 18px; cursor: pointer;
+}
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.msg { font-size: 15px; margin: 0; min-height: 1.5em; }
+.msg.ok { color: var(--ok); font-weight: 600; }
+.msg.err { color: var(--danger); font-weight: 600; }
+.hint { color: var(--muted); font-size: 14px; margin: 0; }
+.notice { border: 1px solid var(--danger); color: var(--danger); border-radius: 12px; padding: 14px; font-weight: 600; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="top">
+    <h1>Escolha dos professores do baile</h1>
+    <p class="lede">Escolha seu nome na lista. Depois escolha 10 professores na ordem que você quiser: o 1º é o seu preferido e o 10º é o último da sua lista. Toque num professor para colocá-lo na próxima posição. Cada aluno envia uma vez.</p>
+  </header>
+
+  <div id="notice" class="notice" hidden></div>
+
+  <section class="card" aria-labelledby="h-prof">
+    <div class="card-head">
+      <h2 id="h-prof">Professores</h2>
+      <span class="count" id="count-prof">0 de 10</span>
+    </div>
+    <div class="grid-profs" id="profs"></div>
+  </section>
+
+  <aside class="card sticky" aria-labelledby="h-lista">
+    <h2 id="h-lista">Sua lista</h2>
+    <div class="actions" style="margin-top:0;margin-bottom:14px">
+      <label class="field" for="aluno">Seu nome
+        <select id="aluno"><option value="">Carregando...</option></select>
+      </label>
+    </div>
+    <ol class="slots" id="slots"></ol>
+    <div class="actions">
+      <p class="hint" id="hint">Escolha seu nome e 10 professores.</p>
+      <button class="btn" id="enviar" type="button" disabled>Enviar minha lista</button>
+      <p class="msg" id="msg" role="status" aria-live="polite"></p>
+    </div>
+  </aside>
+</main>
+
+<script>
+var API = "https://hmnfhqemudatwtdctdvn.supabase.co/functions/v1/baile";
+var MAX = 10;
+var PROFS = [];
+var order = [];
+var busy = false;
+var enviado = false;
+
+function $(id) { return document.getElementById(id); }
+
+function setMsg(text, kind) {
+  var m = $("msg");
+  m.textContent = text || "";
+  m.className = "msg" + (kind ? " " + kind : "");
+}
+
+function aviso(text) {
+  var n = $("notice");
+  n.textContent = text;
+  n.hidden = false;
+}
+
+function montarProfs() {
+  var grid = $("profs");
+  grid.innerHTML = "";
+  for (var i = 0; i < PROFS.length; i++) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "prof";
+    b.setAttribute("data-i", i);
+    var s = document.createElement("strong");
+    s.textContent = PROFS[i].nome;
+    var d = document.createElement("small");
+    d.textContent = PROFS[i].disciplina || "";
+    var p = document.createElement("span");
+    p.className = "pos";
+    b.appendChild(s);
+    b.appendChild(d);
+    b.appendChild(p);
+    b.addEventListener("click", (function (idx) {
+      return function () { toggle(idx); };
+    })(i));
+    grid.appendChild(b);
+  }
+}
+
+function render() {
+  var grid = $("profs");
+  for (var k = 0; k < grid.children.length; k++) {
+    var b = grid.children[k];
+    var i = parseInt(b.getAttribute("data-i"), 10);
+    var at = order.indexOf(i);
+    b.setAttribute("aria-pressed", at >= 0 ? "true" : "false");
+    b.disabled = enviado || (at < 0 && order.length >= MAX);
+    b.querySelector(".pos").textContent = at >= 0 ? String(at + 1) : "";
+  }
+
+  var slots = $("slots");
+  slots.innerHTML = "";
+  for (var p = 0; p < MAX; p++) {
+    var li = document.createElement("li");
+    var rank = document.createElement("span");
+    rank.className = "rank";
+    rank.textContent = String(p + 1);
+    li.appendChild(rank);
+    if (p < order.length) {
+      var prof = PROFS[order[p]];
+      li.className = "filled" + (p < 3 ? " top3" : "");
+      var info = document.createElement("div");
+      info.className = "slot-name";
+      var nm = document.createElement("strong");
+      nm.textContent = prof.nome;
+      var ds = document.createElement("small");
+      ds.textContent = prof.disciplina || "";
+      info.appendChild(nm);
+      info.appendChild(ds);
+      var tools = document.createElement("div");
+      tools.className = "tools";
+      tools.appendChild(botao("↑", "Subir", enviado || p === 0, mover(p, -1)));
+      tools.appendChild(botao("↓", "Descer", enviado || p === order.length - 1, mover(p, 1)));
+      tools.appendChild(botao("✕", "Remover", enviado, remover(order[p]), "x"));
+      li.appendChild(info);
+      li.appendChild(tools);
+    } else {
+      var e = document.createElement("span");
+      e.className = "slot-empty";
+      e.textContent = "Escolha um professor";
+      li.appendChild(e);
+    }
+    slots.appendChild(li);
+  }
+
+  $("count-prof").textContent = order.length + " de " + MAX;
+  var alunoId = $("aluno").value;
+  var pronto = !!alunoId && order.length === MAX && !busy && !enviado;
+  $("enviar").disabled = !pronto;
+  if (enviado) $("hint").textContent = "Lista enviada.";
+  else if (!alunoId) $("hint").textContent = "Escolha seu nome primeiro.";
+  else if (order.length < MAX) $("hint").textContent = "Faltam " + (MAX - order.length) + " professor(es).";
+  else $("hint").textContent = "Confira a ordem e envie.";
+}
+
+function botao(texto, rotulo, desabilitado, fn, extra) {
+  var b = document.createElement("button");
+  b.type = "button";
+  b.textContent = texto;
+  b.title = rotulo;
+  b.setAttribute("aria-label", rotulo);
+  b.disabled = !!desabilitado;
+  if (extra) b.className = extra;
+  b.addEventListener("click", fn);
+  return b;
+}
+
+function mover(p, dir) {
+  return function () {
+    var q = p + dir;
+    if (q < 0 || q >= order.length) return;
+    var t = order[p]; order[p] = order[q]; order[q] = t;
+    setMsg(""); render();
+  };
+}
+
+function remover(i) {
+  return function () { toggle(i); };
+}
+
+function toggle(i) {
+  if (enviado) return;
+  var at = order.indexOf(i);
+  if (at >= 0) order.splice(at, 1);
+  else if (order.length < MAX) order.push(i);
+  setMsg(""); render();
+}
+
+function montarAlunos(turmas) {
+  var sel = $("aluno");
+  sel.innerHTML = "";
+  var o0 = document.createElement("option");
+  o0.value = "";
+  o0.textContent = "Escolha seu nome";
+  sel.appendChild(o0);
+  for (var t = 0; t < turmas.length; t++) {
+    var g = document.createElement("optgroup");
+    g.label = turmas[t].nome;
+    for (var a = 0; a < turmas[t].alunos.length; a++) {
+      var al = turmas[t].alunos[a];
+      var o = document.createElement("option");
+      o.value = al.id;
+      o.textContent = al.nome + (al.votou ? "  (já enviou)" : "");
+      o.disabled = !!al.votou;
+      g.appendChild(o);
+    }
+    sel.appendChild(g);
+  }
+}
+
+function enviar() {
+  if (busy || enviado) return;
+  var alunoId = $("aluno").value;
+  if (!alunoId || order.length !== MAX) return;
+  busy = true;
+  setMsg("Enviando...");
+  render();
+  var nomes = [];
+  for (var i = 0; i < order.length; i++) nomes.push(PROFS[order[i]].nome);
+  fetch(API + "?api=votar", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ aluno_id: alunoId, professores: nomes })
+  }).then(function (r) {
+    return r.json().then(function (j) { return { ok: r.ok, j: j }; });
+  }).then(function (res) {
+    busy = false;
+    if (res.ok && res.j && res.j.ok) {
+      enviado = true;
+      $("aluno").disabled = true;
+      setMsg("Lista enviada. Obrigado!", "ok");
+    } else {
+      setMsg((res.j && res.j.erro) || "Não foi possível enviar. Tente de novo.", "err");
+    }
+    render();
+  }).catch(function () {
+    busy = false;
+    setMsg("Sem conexão. Verifique a internet e tente de novo.", "err");
+    render();
+  });
+}
+
+function iniciar() {
+  render();
+  $("aluno").addEventListener("change", function () { setMsg(""); render(); });
+  $("enviar").addEventListener("click", enviar);
+
+  fetch(API + "?api=dados").then(function (r) { return r.json(); }).then(function (d) {
+    if (!d || !d.professores || !d.turmas) throw new Error("dados");
+    PROFS = d.professores;
+    montarProfs();
+    montarAlunos(d.turmas);
+    render();
+  }).catch(function () {
+    aviso("Não foi possível carregar a lista. Recarregue a página em alguns instantes.");
+    var sel = $("aluno");
+    sel.innerHTML = "";
+    var falhou = document.createElement("option");
+    falhou.value = "";
+    falhou.textContent = "Não carregou";
+    sel.appendChild(falhou);
+    render();
+  });
+}
+
+iniciar();
+</script>
+</body>
+</html>
