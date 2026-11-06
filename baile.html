@@ -12,14 +12,14 @@
 :root {
   --bg: #f5f2ea; --surface: #fffdf7; --ink: #1c2a2b; --muted: #5d6967;
   --line: #d9d2c2; --accent: #1d6b66; --accent-ink: #ffffff;
-  --gold: #b97a1f; --danger: #9d3a2b; --ok: #2f7a45;
+  --danger: #9d3a2b; --ok: #2f7a45;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #131a1a; --surface: #1b2525; --ink: #eceee6; --muted: #a2adab;
     --line: #34403f; --accent: #5fb7b0; --accent-ink: #0e1818;
-    --gold: #e2aa53; --danger: #e58a78; --ok: #7fc795; color-scheme: dark;
+    --danger: #e58a78; --ok: #7fc795; color-scheme: dark;
   }
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -52,41 +52,36 @@ select:focus-visible, button:focus-visible { outline: 3px solid var(--accent); o
 .grid-profs { display: grid; grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); gap: 10px; }
 .prof {
   font: inherit; text-align: left; color: var(--ink); background: var(--bg);
-  border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; min-height: 58px;
+  border: 1px solid var(--line); border-radius: 10px; padding: 10px 34px 10px 12px; min-height: 58px;
   cursor: pointer; display: grid; gap: 2px; min-width: 0; position: relative;
 }
 .prof strong { font-weight: 600; font-size: 15px; overflow-wrap: anywhere; }
 .prof small { color: var(--muted); font-size: 13px; }
 .prof[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 .prof[aria-pressed="true"] small { color: var(--accent-ink); opacity: .85; }
-.prof .pos {
-  position: absolute; top: 6px; right: 6px; width: 22px; height: 22px; border-radius: 50%;
-  display: none; place-items: center; font-size: 12px; font-weight: 700;
-  background: var(--accent-ink); color: var(--accent); font-variant-numeric: tabular-nums;
+.prof .tick {
+  position: absolute; top: 50%; right: 10px; transform: translateY(-50%);
+  width: 22px; height: 22px; border-radius: 50%;
+  display: none; place-items: center; font-size: 13px; font-weight: 700;
+  background: var(--accent-ink); color: var(--accent);
 }
-.prof[aria-pressed="true"] .pos { display: grid; }
+.prof[aria-pressed="true"] .tick { display: grid; }
 .prof:disabled { opacity: .45; cursor: not-allowed; }
-ol.slots { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-ol.slots li {
-  display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; gap: 8px;
-  border: 1px dashed var(--line); border-radius: 10px; padding: 6px 8px; min-height: 52px;
+ul.escolhidos { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+ul.escolhidos li {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px;
+  border: 1px solid var(--line); border-radius: 10px; padding: 8px 8px 8px 12px; min-height: 52px;
+  background: var(--bg);
 }
-ol.slots li.filled { border: 1px solid var(--line); background: var(--bg); }
-.rank { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
-  font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums; background: var(--line); color: var(--ink); }
-li.filled .rank { background: var(--ink); color: var(--surface); }
-li.filled.top3 .rank { background: var(--gold); color: #1c1600; }
 .slot-name { min-width: 0; }
 .slot-name strong { display: block; font-weight: 600; overflow-wrap: anywhere; font-size: 15px; }
 .slot-name small { color: var(--muted); font-size: 13px; }
-.slot-empty { color: var(--muted); font-size: 14px; }
-.tools { display: flex; gap: 4px; }
-.tools button {
-  font: inherit; font-size: 15px; color: var(--ink); background: var(--surface);
+.vazio { color: var(--muted); font-size: 15px; margin: 0; padding: 14px 0; }
+.tirar {
+  font: inherit; font-size: 15px; color: var(--danger); background: var(--surface);
   border: 1px solid var(--line); border-radius: 8px; width: 36px; height: 36px; cursor: pointer; display: grid; place-items: center;
 }
-.tools button:disabled { opacity: .3; cursor: default; }
-.tools button.x { color: var(--danger); }
+.tirar:disabled { opacity: .3; cursor: default; }
 .actions { display: grid; gap: 10px; margin-top: 16px; }
 .btn {
   font: inherit; font-weight: 700; font-size: 16px; color: var(--accent-ink); background: var(--accent);
@@ -105,7 +100,7 @@ li.filled.top3 .rank { background: var(--gold); color: #1c1600; }
 <main class="wrap">
   <header class="top">
     <h1>Escolha dos professores do baile</h1>
-    <p class="lede">Escolha seu nome na lista. Depois escolha 10 professores na ordem que você quiser: o 1º é o seu preferido e o 10º é o último da sua lista. Toque num professor para colocá-lo na próxima posição. Cada aluno envia uma vez.</p>
+    <p class="lede">Escolha seu nome na lista e marque 10 professores. Os 10 valem igual, não precisa colocar em ordem. Toque num professor para marcar e toque de novo para desmarcar. Cada aluno envia uma vez.</p>
   </header>
 
   <div id="notice" class="notice" hidden></div>
@@ -119,16 +114,17 @@ li.filled.top3 .rank { background: var(--gold); color: #1c1600; }
   </section>
 
   <aside class="card sticky" aria-labelledby="h-lista">
-    <h2 id="h-lista">Sua lista</h2>
+    <h2 id="h-lista">Sua escolha</h2>
     <div class="actions" style="margin-top:0;margin-bottom:14px">
       <label class="field" for="aluno">Seu nome
         <select id="aluno"><option value="">Carregando...</option></select>
       </label>
     </div>
-    <ol class="slots" id="slots"></ol>
+    <p class="vazio" id="vazio">Nenhum professor marcado ainda.</p>
+    <ul class="escolhidos" id="slots"></ul>
     <div class="actions">
-      <p class="hint" id="hint">Escolha seu nome e 10 professores.</p>
-      <button class="btn" id="enviar" type="button" disabled>Enviar minha lista</button>
+      <p class="hint" id="hint">Escolha seu nome e marque 10 professores.</p>
+      <button class="btn" id="enviar" type="button" disabled>Enviar minha escolha</button>
       <p class="msg" id="msg" role="status" aria-live="polite"></p>
     </div>
   </aside>
@@ -138,7 +134,7 @@ li.filled.top3 .rank { background: var(--gold); color: #1c1600; }
 var API = "https://hmnfhqemudatwtdctdvn.supabase.co/functions/v1/baile";
 var MAX = 10;
 var PROFS = [];
-var order = [];
+var escolhidos = [];
 var busy = false;
 var enviado = false;
 
@@ -168,13 +164,14 @@ function montarProfs() {
     s.textContent = PROFS[i].nome;
     var d = document.createElement("small");
     d.textContent = PROFS[i].disciplina || "";
-    var p = document.createElement("span");
-    p.className = "pos";
+    var t = document.createElement("span");
+    t.className = "tick";
+    t.textContent = "✓";
     b.appendChild(s);
     b.appendChild(d);
-    b.appendChild(p);
+    b.appendChild(t);
     b.addEventListener("click", (function (idx) {
-      return function () { toggle(idx); };
+      return function () { alternar(idx); };
     })(i));
     grid.appendChild(b);
   }
@@ -185,88 +182,59 @@ function render() {
   for (var k = 0; k < grid.children.length; k++) {
     var b = grid.children[k];
     var i = parseInt(b.getAttribute("data-i"), 10);
-    var at = order.indexOf(i);
-    b.setAttribute("aria-pressed", at >= 0 ? "true" : "false");
-    b.disabled = enviado || (at < 0 && order.length >= MAX);
-    b.querySelector(".pos").textContent = at >= 0 ? String(at + 1) : "";
+    var marcado = escolhidos.indexOf(i) >= 0;
+    b.setAttribute("aria-pressed", marcado ? "true" : "false");
+    b.disabled = enviado || (!marcado && escolhidos.length >= MAX);
   }
 
-  var slots = $("slots");
-  slots.innerHTML = "";
-  for (var p = 0; p < MAX; p++) {
+  // mostra os marcados na ordem da lista de professores, sem posicao
+  var ordenados = escolhidos.slice().sort(function (a, b) { return a - b; });
+  var lista = $("slots");
+  lista.innerHTML = "";
+  for (var n = 0; n < ordenados.length; n++) {
+    var prof = PROFS[ordenados[n]];
     var li = document.createElement("li");
-    var rank = document.createElement("span");
-    rank.className = "rank";
-    rank.textContent = String(p + 1);
-    li.appendChild(rank);
-    if (p < order.length) {
-      var prof = PROFS[order[p]];
-      li.className = "filled" + (p < 3 ? " top3" : "");
-      var info = document.createElement("div");
-      info.className = "slot-name";
-      var nm = document.createElement("strong");
-      nm.textContent = prof.nome;
-      var ds = document.createElement("small");
-      ds.textContent = prof.disciplina || "";
-      info.appendChild(nm);
-      info.appendChild(ds);
-      var tools = document.createElement("div");
-      tools.className = "tools";
-      tools.appendChild(botao("↑", "Subir", enviado || p === 0, mover(p, -1)));
-      tools.appendChild(botao("↓", "Descer", enviado || p === order.length - 1, mover(p, 1)));
-      tools.appendChild(botao("✕", "Remover", enviado, remover(order[p]), "x"));
-      li.appendChild(info);
-      li.appendChild(tools);
-    } else {
-      var e = document.createElement("span");
-      e.className = "slot-empty";
-      e.textContent = "Escolha um professor";
-      li.appendChild(e);
-    }
-    slots.appendChild(li);
+    var info = document.createElement("div");
+    info.className = "slot-name";
+    var nm = document.createElement("strong");
+    nm.textContent = prof.nome;
+    var ds = document.createElement("small");
+    ds.textContent = prof.disciplina || "";
+    info.appendChild(nm);
+    info.appendChild(ds);
+    var x = document.createElement("button");
+    x.type = "button";
+    x.className = "tirar";
+    x.textContent = "✕";
+    x.title = "Tirar";
+    x.setAttribute("aria-label", "Tirar " + prof.nome);
+    x.disabled = enviado;
+    x.addEventListener("click", (function (idx) {
+      return function () { alternar(idx); };
+    })(ordenados[n]));
+    li.appendChild(info);
+    li.appendChild(x);
+    lista.appendChild(li);
   }
+  $("vazio").hidden = escolhidos.length > 0;
 
-  $("count-prof").textContent = order.length + " de " + MAX;
+  $("count-prof").textContent = escolhidos.length + " de " + MAX;
   var alunoId = $("aluno").value;
-  var pronto = !!alunoId && order.length === MAX && !busy && !enviado;
+  var pronto = !!alunoId && escolhidos.length === MAX && !busy && !enviado;
   $("enviar").disabled = !pronto;
-  if (enviado) $("hint").textContent = "Lista enviada.";
+  if (enviado) $("hint").textContent = "Escolha enviada.";
   else if (!alunoId) $("hint").textContent = "Escolha seu nome primeiro.";
-  else if (order.length < MAX) $("hint").textContent = "Faltam " + (MAX - order.length) + " professor(es).";
-  else $("hint").textContent = "Confira a ordem e envie.";
+  else if (escolhidos.length < MAX) $("hint").textContent = "Faltam " + (MAX - escolhidos.length) + " professor(es).";
+  else $("hint").textContent = "Confira os 10 e envie.";
 }
 
-function botao(texto, rotulo, desabilitado, fn, extra) {
-  var b = document.createElement("button");
-  b.type = "button";
-  b.textContent = texto;
-  b.title = rotulo;
-  b.setAttribute("aria-label", rotulo);
-  b.disabled = !!desabilitado;
-  if (extra) b.className = extra;
-  b.addEventListener("click", fn);
-  return b;
-}
-
-function mover(p, dir) {
-  return function () {
-    var q = p + dir;
-    if (q < 0 || q >= order.length) return;
-    var t = order[p]; order[p] = order[q]; order[q] = t;
-    setMsg(""); render();
-  };
-}
-
-function remover(i) {
-  return function () { toggle(i); };
-}
-
-function toggle(i) {
+function alternar(i) {
   if (enviado) return;
-  var at = order.indexOf(i);
-  if (at >= 0) order.splice(at, 1);
-  else if (order.length < MAX) order.push(i);
-  setMsg(""); render();
+  var at = escolhidos.indexOf(i);
+  if (at >= 0) escolhidos.splice(at, 1);
+  else if (escolhidos.length < MAX) escolhidos.push(i);
+  setMsg("");
+  render();
 }
 
 function montarAlunos(turmas) {
@@ -294,12 +262,13 @@ function montarAlunos(turmas) {
 function enviar() {
   if (busy || enviado) return;
   var alunoId = $("aluno").value;
-  if (!alunoId || order.length !== MAX) return;
+  if (!alunoId || escolhidos.length !== MAX) return;
   busy = true;
   setMsg("Enviando...");
   render();
   var nomes = [];
-  for (var i = 0; i < order.length; i++) nomes.push(PROFS[order[i]].nome);
+  var ordenados = escolhidos.slice().sort(function (a, b) { return a - b; });
+  for (var i = 0; i < ordenados.length; i++) nomes.push(PROFS[ordenados[i]].nome);
   fetch(API + "?api=votar", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -311,7 +280,7 @@ function enviar() {
     if (res.ok && res.j && res.j.ok) {
       enviado = true;
       $("aluno").disabled = true;
-      setMsg("Lista enviada. Obrigado!", "ok");
+      setMsg("Escolha enviada. Obrigado!", "ok");
     } else {
       setMsg((res.j && res.j.erro) || "Não foi possível enviar. Tente de novo.", "err");
     }
